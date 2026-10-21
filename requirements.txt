@@ -1,0 +1,13 @@
+# Python 3.11, macOS Apple Silicon. Versions checked on PyPI on 2026-10-21.
+numpy>=1.26
+sounddevice>=0.5          # PortAudio capture (mic + BlackHole)
+soxr>=1.0                 # streaming resampler 48 kHz -> 16 kHz
+torch>=2.7                # MPS backend for ASR
+torchaudio>=2.7.1         # required by speechbrain
+transformers>=5.0         # Whisper / MMS ASR, NLLB tokenizer
+sentencepiece>=0.2
+ctranslate2>=4.5          # NLLB int8 inference on CPU
+silero-vad>=6.0           # voice activity detection
+speechbrain>=1.1          # ECAPA speaker embeddings
+huggingface_hub>=1.0      # model downloads
+pytest>=8                 # tests

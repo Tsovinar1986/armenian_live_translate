@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+models/
+eval/data/
+*.wav
+*.flac
+*.mp3
+.DS_Store
