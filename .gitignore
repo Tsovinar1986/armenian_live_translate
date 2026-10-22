@@ -8,3 +8,31 @@ eval/data/
 *.flac
 *.mp3
 .DS_Store
+
+# other virtualenvs
+venv/
+env/
+
+# secrets
+.env
+.env.*
+*.pem
+*.key
+
+# model weights anywhere in the tree
+*.bin
+*.safetensors
+*.pt
+*.pth
+*.onnx
+*.ckpt
+
+# more audio formats
+*.ogg
+*.m4a
+*.opus
+*.aiff
+
+# editors
+.vscode/
+.idea/
