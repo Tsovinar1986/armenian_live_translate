@@ -11,7 +11,7 @@ from livetr import SAMPLE_RATE
 @dataclass(frozen=True)
 class AsrSpec:
     repo: str
-    kind: str                 # "whisper" or "mms"
+    kind: str                 # "whisper", "mms" or "nemo"
     language: str | None      # Whisper language code, MMS adapter id, or None if baked into the model
     note: str
 
@@ -32,6 +32,10 @@ MODELS: dict[str, AsrSpec] = {
     "mms": AsrSpec(
         "facebook/mms-1b-all", "mms", "hye",
         "Meta MMS 1B CTC model with the Armenian adapter",
+    ),
+    "nemo-hy": AsrSpec(
+        "nvidia/stt_hy_fastconformer_hybrid_large_pc", "nemo", None,
+        "NVIDIA FastConformer hybrid RNNT/CTC (~115M) trained for Armenian, with punctuation and capitals",
     ),
 }
 
@@ -99,6 +103,23 @@ class MmsASR:
         return self.processor.decode(ids).strip()
 
 
+class NemoASR:
+    def __init__(self, repo: str, device: str):
+        from pathlib import Path
+
+        from huggingface_hub import snapshot_download
+        from nemo.collections.asr.models import ASRModel
+
+        files = sorted(Path(snapshot_download(repo, allow_patterns=["*.nemo"])).glob("*.nemo"))
+        if len(files) != 1:
+            raise RuntimeError(f"expected one .nemo file in {repo}, found {[f.name for f in files]}")
+        self.model = ASRModel.restore_from(str(files[0]), map_location=device).eval()
+
+    def transcribe(self, audio: np.ndarray) -> str:
+        out = self.model.transcribe([audio], batch_size=1, verbose=False)
+        return out[0].text.strip()
+
+
 def load_asr(key: str, device: str, dtype: str = "float16"):
     if key not in MODELS:
         raise ValueError(f"Unknown ASR model '{key}'. Choose from: {', '.join(MODELS)}")
@@ -107,4 +128,6 @@ def load_asr(key: str, device: str, dtype: str = "float16"):
         return WhisperASR(spec.repo, spec.language, device, dtype)
     if spec.kind == "mms":
         return MmsASR(spec.repo, spec.language, device, dtype)
+    if spec.kind == "nemo":
+        return NemoASR(spec.repo, device)  # runs in float32; dtype applies to the torch/transformers models
     raise ValueError(f"Unknown model kind {spec.kind}")

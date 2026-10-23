@@ -31,7 +31,7 @@ def main() -> None:
         spec = MODELS[key]
         print(f"[asr] {key}: {spec.repo}")
         # MMS ships ~1,100 language adapters; fetch only the shared weights and the Armenian one.
-        allow = None if spec.kind == "whisper" else ["*.json", "*.txt", "model*.safetensors", f"adapter.{spec.language}.*"]
+        allow = None if spec.kind != "mms" else ["*.json", "*.txt", "model*.safetensors", f"adapter.{spec.language}.*"]
         snapshot_download(spec.repo, allow_patterns=allow)
 
     out = Path(args.nllb_dir)
