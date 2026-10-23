@@ -95,3 +95,23 @@ Setup: video played to Multi-Output Device, `python -m livetr --no-mic --no-colo
   nonsense in places. Consistent with FLEURS WER ~45 %.
 Conclusion: the 5 s limit holds, but with only ~0.3 s margin at worst. ASR time is the lever (faster runtime
 such as MLX 8-bit, or a shorter input window), to be decided after the model comparison.
+
+## 2026-10-23 — ASR comparison on FLEURS (40 test clips, M1 8 GB, fp16 on MPS)
+| model | CER | WER | ASR time mean / p90 | outputs with `�` |
+|---|---|---|---|---|
+| buzz (`BuzzASR/armenian`, large-v3 fine-tune) | 4.6 % | 11.6 % | 2.76 / 2.98 s | 0 |
+| mms (`facebook/mms-1b-all`, hye adapter, CTC) | 5.2 % | 21.9 % | 0.61 / 0.74 s | 0 |
+| turbo-hy (`Chillarmo/whisper-large-v3-turbo-armenian`) | 12.6 % | 45.6 % | 2.44 / 2.73 s | 8 |
+| turbo-zeroshot (`openai/whisper-large-v3-turbo`) | 21.5 % | 68.4 % | 2.37 / 2.68 s | 3 |
+Reading:
+- The provisional default turbo-hy is clearly beaten; it is no longer a candidate for the default.
+- buzz is the most accurate, but ASR time is like turbo-hy, so live latency would again be ~4.5 s at p90.
+  Its card reports FLEURS WER 11.9 %, which we reproduce; it may have trained on FLEURS train (same domain as
+  this test), so its lead on spontaneous speech still has to be shown live.
+- mms has almost the same CER, is 4–5x faster (5 s latency margin becomes large), but its WER is twice
+  buzz's and it outputs no punctuation or capitals, which may hurt translation. Needs a translation check.
+- Peak RSS is not reported here: on Apple Silicon, model weights on MPS live in Metal memory, which
+  `ru_maxrss` does not count (buzz showed 0.44 GB for a ~3 GB model). Memory must be read from
+  Activity Monitor or `torch.mps.driver_allocated_memory()` instead.
+Next: replay the same recorded conversation with buzz and with mms (`--file`) to compare end-to-end latency and
+translation, then pick the default.
