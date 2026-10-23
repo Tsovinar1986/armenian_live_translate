@@ -187,3 +187,14 @@ macOS delivered digital silence, −90 dB): 6 phrases, all `Me`, latency 0.8–1
 well; NLLB mistranslated idioms and loanwords (`ինչ կա, չկա` → "there is no such thing", `չատերը` → "chessboard").
 Translation of spoken, colloquial Armenian is now the weakest part. Options for later: NLLB 1.3B (memory),
 or a small local LLM for translation (memory and latency); not tried within the time budget.
+
+## 2026-10-23 — Phrase limit (forced cut) 8 s -> 15 s
+The 8 s limit was set when ASR took 2–3 s. With the NVIDIA model (0.2–0.3 s) it only cost accuracy: cuts fell
+inside words (`քարանձավ` -> "…մի" + "Անցավ…"). Test call (clean, 9 turns of 7–29 s), one run each:
+| limit | forced cuts | CER / WER | latency p50 / max | speaker turns |
+|---|---|---|---|---|
+| 8 s | 11 | 5.7 % / 13.0 % | 1.2 / 1.5 s | 9/9 |
+| 12 s | 6 | 5.0 % / 11.4 % | 1.9 / 3.0 s | 9/9 |
+| 15 s | 3 | 4.1 % / 10.2 % | 2.1 / 2.8 s | 9/9 |
+Chosen: 15 s. Trade-off: in a long monologue the first words appear later (up to ~15 s after they were said); the
+brief measures latency from the end of a phrase, which stays < 3 s. Not done: cutting at the quietest moment.

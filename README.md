@@ -72,7 +72,7 @@ python -m livetr --no-mic                          # only the call side
 Ctrl-C stops and prints session statistics (latency p50/p90/max per source, time per stage, dropped segments).
 
 Useful knobs: `--min-silence-ms` (pause that ends a phrase, default 500), `--max-segment-s` (forced cut,
-default 8), `--speaker-threshold` (default 0.45), `--vad-threshold` (default 0.5). Run `--help` for all of them.
+default 15), `--speaker-threshold` (default 0.45), `--vad-threshold` (default 0.5). Run `--help` for all of them.
 
 ## 3. Architecture
 
@@ -97,7 +97,8 @@ default 8), `--speaker-threshold` (default 0.45), `--vad-threshold` (default 0.5
 Design points:
 - **Utterance-level, not word streaming.** The VAD cuts at a 500 ms pause; each phrase is transcribed whole.
   ASR is more accurate on full phrases than on fragments, and a phrase still fits in 5 s: VAD 0.5 s, then ASR, speaker
-  and translation. Phrases longer than 8 s are force-cut so ASR time stays bounded.
+  and translation. Phrases longer than 15 s are force-cut so ASR time stays bounded (8 s at first; raised after
+  measuring, see below).
 - **One worker for both sources.** Two copies of the models do not fit in 8 GB RAM. If both sides talk at the
   same time, one waits; the wait is shown in each line (`wait`).
 - **Order inside the worker:** ASR first. If nothing is recognised, nothing is printed and the segment does
@@ -206,18 +207,19 @@ Measured on an M1 MacBook with 8 GB (details and all numbers in `DECISIONS.md`).
 
 | Question from the brief | Result | Evidence |
 |---|---|---|
-| Is the Armenian recognised? | Yes on clear speech: CER 3.3 % / WER 10 % on single FLEURS sentences, 5.8 % / 12.6 % on a test call with long turns | `eval/run_asr.py`, `eval/score_call.py` |
+| Is the Armenian recognised? | Yes on clear speech: CER 3.3 % / WER 10 % on single FLEURS sentences, 4.1 % / 10.2 % on a test call with long turns | `eval/run_asr.py`, `eval/score_call.py` |
 | Is the English understandable? | Mostly. Translation errors follow ASR errors: `Քաղաքակրթություն` (civilization) heard as `Քաղաքականություն` (politics) gave "The word politics comes from the Latin syphilis" | `chats/program-output/2026-10-23-test-call-live-blackhole.md` |
-| Under 5 seconds? | Yes: p50 1.3 s, max 1.6 s through BlackHole; 0.8–1.5 s on the microphone | `--stats` |
+| Under 5 seconds? | Yes: p50 1.3 s, max 1.6 s through BlackHole (8 s limit); max 2.8 s with the 15 s limit; 0.8–1.5 s on the microphone | `--stats` |
 | Are speakers kept apart? | 3 of 3 voices, 9/9 turns, also through the Opus codec calls use | `eval/score_call.py` |
 | Local only? | Yes, runs with all network blocked | DECISIONS.md |
 
 What does not work well, or is not proven yet:
 - **Spontaneous, fast speech** is much harder than read speech. A YouTube conversation (with an older model)
   gave many wrong words; the current model has not yet been tested on such speech.
-- **Long turns are cut every 8 s**, sometimes inside a word: each part is transcribed and translated on its own,
-  which costs accuracy (CER 3.3 % on whole sentences vs 5.7 % in the test call). Example: `քարանձավ` (cave) was
-  split into "…մի։" and "Անցավ…", so the cave is missing from the English.
+- **Very long turns are cut**, sometimes inside a word: each part is transcribed and translated on its own. With
+  the first limit of 8 s, `քարանձավ` (cave) was split into "…մի։" and "Անցավ…", and the cave was missing from the
+  English. Raising the limit to 15 s cut the test call 3 times instead of 11 and lowered CER from 5.7 % to 4.1 %,
+  with latency still max 2.8 s. Turns over 15 s are still cut.
 - **Two very similar voices** were never tested: the Armenian test data has only one man and two women.
 - **Colloquial Armenian translates badly.** Live on the mic, ASR got spontaneous speech right (`էս`, `ա`), but
   NLLB turned `ինչ կա, չկա` ("what's up") into "there is no such thing" and `չատերը` ("the chats") into
@@ -235,7 +237,7 @@ What does not work well, or is not proven yet:
   segment gets one label. Similar voices (same gender, similar age) can be merged into one speaker. Very short
   replies show as `Speaker ?`.
 - **One worker.** When both sides talk at the same time, one waits. That wait counts towards the 5 s.
-- **Phrase-level output.** Nothing is printed until the speaker pauses (or 8 s pass). Long sentences that are
+- **Phrase-level output.** Nothing is printed until the speaker pauses (or 15 s pass). Long sentences that are
   force-cut are translated in pieces, so the translation can be worse at the cut.
 - **ASR can still produce words from noise** that the VAD lets through (music, typing). There is no text filter,
   on purpose: such errors stay visible.
@@ -248,7 +250,7 @@ What does not work well, or is not proven yet:
 - Try the CTC decoder of the same model and an Armenian language model for decoding (card: RNNT is more
   accurate; an external LM may fix spelling of names).
 - Fine-tune on conversational Armenian audio recorded through a real call codec.
-- Cut long turns at the quietest moment near 8 s instead of exactly at 8 s.
+- Cut long turns at the quietest moment near the limit instead of exactly at it.
 - Stream partial results (show Armenian text while the person is still speaking, finalise at the pause).
 - Process both sources in parallel if memory allows, or prioritise the source that has waited longer.
 - Better diarization on the call side: overlap-aware segmentation (pyannote/diart) inside long segments, and

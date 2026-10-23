@@ -39,7 +39,7 @@ def build_parser() -> argparse.ArgumentParser:
     s = p.add_argument_group("segmentation and speakers")
     s.add_argument("--vad-threshold", type=float, default=0.5)
     s.add_argument("--min-silence-ms", type=int, default=500)
-    s.add_argument("--max-segment-s", type=float, default=8.0)
+    s.add_argument("--max-segment-s", type=float, default=15.0)
     s.add_argument("--speaker-threshold", type=float, default=0.45, help="cosine similarity for 'same speaker'")
     s.add_argument("--max-speakers", type=int, default=8)
 

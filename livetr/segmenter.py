@@ -27,7 +27,7 @@ class Segmenter:
         min_silence_ms: int = 500,      # pause that ends an utterance
         speech_pad_ms: int = 160,       # audio kept before speech start and after speech end
         min_speech_ms: int = 400,       # shorter utterances are dropped (clicks, coughs)
-        max_segment_s: float = 8.0,     # force a cut so ASR time stays bounded
+        max_segment_s: float = 15.0,    # force a cut so ASR time stays bounded (see DECISIONS.md)
     ):
         self.source = source
         self.vad = vad
