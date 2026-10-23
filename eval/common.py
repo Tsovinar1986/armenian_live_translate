@@ -16,7 +16,7 @@ RESULTS = ROOT / "eval" / "results"
 
 def load_manifest(path: Path = DATA / "manifest.tsv") -> list[dict]:
     if not path.exists():
-        raise SystemExit(f"{path} not found. Record clips first: python eval/record.py --speaker <name>")
+        raise SystemExit(f"{path} not found. Create it first: eval/record.py (own clips) or eval/get_fleurs.py (FLEURS)")
     with open(path, encoding="utf-8") as f:
         return list(csv.DictReader(f, delimiter="\t"))
 

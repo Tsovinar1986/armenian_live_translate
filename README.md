@@ -163,6 +163,10 @@ python eval/record.py --speaker davit --free 6
 for m in turbo-hy buzz mms turbo-zeroshot; do python eval/run_asr.py --model $m; done
 python eval/run_asr.py --summary
 
+# 2b. the same on Google FLEURS Armenian (read speech, many readers, reference text; no recording needed)
+python eval/get_fleurs.py                          # 40 test-split clips <= 10 s -> eval/data/fleurs/
+for m in turbo-hy buzz mms turbo-zeroshot; do python eval/run_asr.py --set fleurs --model $m; done
+
 # 3. translation of the reference sentences, and of real ASR output (error propagation)
 python eval/run_translate.py
 python eval/run_translate.py --from-asr turbo-hy

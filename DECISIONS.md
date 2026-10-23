@@ -56,3 +56,14 @@ artifacts (plain per-block `resample_poly` clicks at block boundaries).
 
 ## 2026-10-21 — Python 3.11
 Widest wheel support for torch / ctranslate2 / speechbrain on macOS arm64.
+
+## 2026-10-23 — ASR test set from Google FLEURS (hy_am, test split)
+Why: the brief sets no data amount; the tips ask for "a few short recordings with the correct text". FLEURS gives
+read Armenian with reference text from many readers, without depending on other people to record.
+- 40 clips, one recording per sentence, <= 10 s (live phrases are cut at 8 s), seed 0: `eval/get_fleurs.py`.
+- Test split, because the fine-tunes may have trained on FLEURS train.
+- Own manifest (`eval/data/fleurs_manifest.tsv`): FLEURS has no speaker ids, so these clips must not reach
+  `run_speakers.py`.
+- Limits: read speech, clean studio-ish audio, no call codec. It measures ASR only, not speakers or live latency.
+First result, turbo-hy fp16 on MPS: CER 13.1 %, WER 45.4 %, 2.45 s mean ASR time. 8 of 40 outputs contain `�`:
+the model emits incomplete UTF-8 byte tokens for Armenian letters (decoding is whole-sequence, so not our bug).
