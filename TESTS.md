@@ -31,6 +31,7 @@ Automated tests: `pytest` (pure logic only, no models or audio devices needed).
 - [ ] Same voice keeps its label for the whole session (10+ minutes). (automated: stable centroid test)
 - [ ] Short segments do not create new speakers. (automated)
 - [ ] `eval/run_speakers.py` similarity distributions: same-speaker vs different-speaker separate cleanly?
+  FLEURS pairs (`eval/fleurs_speakers.py`): yes, valley at 0.4–0.5 for full clips and 3 s crops; threshold 0.45.
 - [ ] Two call participants of the same gender / similar voice: are they kept apart? (known hard case)
 - [ ] Video/call with 10+ speaker switches: every returning speaker gets its old label back.
   Live test 1: 2 switches, correct, too few to count.

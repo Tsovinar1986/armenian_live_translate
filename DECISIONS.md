@@ -146,3 +146,12 @@ longer eats the 5 s budget.
   1.1–1.8 s after they end. Spikes (translation up to 10 s) were traced to the machine, not the code: a fixed numpy
   workload varied 5.8x in the same minutes, while another project was rendering speech (`say`) in the background,
   on battery, with ~4 GB swap. Latency must be measured on a quiet Mac (other jobs stopped, on power).
+
+## 2026-10-23 — Speaker threshold 0.45 confirmed on FLEURS pairs (`eval/fleurs_speakers.py`)
+ECAPA cosine similarity for all 832 pairs of FLEURS test recordings of the same sentence (932 clips).
+Different-gender pairs (certainly different people, n=401): max 0.30 on full clips, 0.27 on 3 s crops.
+Same-gender pairs (n=431) are bimodal: different people ~0.1–0.4, the same reader twice ~0.6–1.0 (full clips)
+or ~0.5–0.9 (3 s crops). The valley is 0.4–0.5 in both cases, so 0.45 stays: no different-gender pair reaches it,
+and it sits below the same-reader peak even for short phrases.
+Limits: read speech, studio-like audio, no call codec. Two similar same-gender voices can reach 0.4–0.5 and may be
+merged; that is the known hard case and needs a live check. Pair similarities are in `eval/results/`.

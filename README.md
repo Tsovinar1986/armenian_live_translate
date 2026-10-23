@@ -180,6 +180,8 @@ python eval/run_translate.py --from-asr nemo-hy
 
 # 4. speakers: same- vs different-speaker similarity, best threshold, simulated live clustering
 python eval/run_speakers.py
+python eval/fleurs_speakers.py                     # threshold from FLEURS same-sentence pairs
+python eval/fleurs_speakers.py --crop-s 3          # the same on 3 s crops (short live phrases)
 
 # 5. end-to-end latency on a recording, without a call
 python -m livetr --file some_call.wav
