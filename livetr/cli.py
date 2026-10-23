@@ -10,7 +10,7 @@ import numpy as np
 
 from livetr.asr import MODELS
 
-DEFAULT_ASR = "buzz"  # most accurate on FLEURS; see DECISIONS.md (2026-10-23)
+DEFAULT_ASR = "nemo-hy"  # most accurate and fastest on FLEURS; see DECISIONS.md (2026-10-23)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -30,8 +30,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     m = p.add_argument_group("models")
     m.add_argument("--asr", choices=sorted(MODELS), default=DEFAULT_ASR, help=f"ASR model (default {DEFAULT_ASR})")
-    m.add_argument("--device", choices=["auto", "mps", "cpu"], default="auto", help="device for ASR")
-    m.add_argument("--asr-dtype", choices=["float16", "float32"], default="float16")
+    m.add_argument("--device", choices=["auto", "mps", "cpu"], default="cpu",
+                   help="device for ASR (default cpu: measured fastest for this small model)")
     m.add_argument("--nllb-dir", default="models/nllb-200-distilled-600M-ct2-int8")
     m.add_argument("--allow-download", action="store_true",
                    help="allow Hugging Face downloads at runtime (default: offline, models must be downloaded first)")
@@ -134,7 +134,7 @@ def main(argv: list[str] | None = None) -> None:
     t0 = time.monotonic()
     device = pick_device(args.device)
     print(f"loading ASR '{args.asr}' ({MODELS[args.asr].repo}) on {device} …", file=sys.stderr)
-    asr = load_asr(args.asr, device, args.asr_dtype)
+    asr = load_asr(args.asr, device)
     print("loading NLLB translator …", file=sys.stderr)
     translator = NllbTranslator(args.nllb_dir)
     embedder = EcapaEmbedder() if any(s.name == SYSTEM for s in sources) else None

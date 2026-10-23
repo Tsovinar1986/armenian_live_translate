@@ -1,9 +1,8 @@
 """Benchmark one ASR model on the recorded clips: CER, WER, latency, memory.
 
-    python eval/run_asr.py --model turbo-hy
-    for m in buzz turbo-hy mms turbo-zeroshot; do python eval/run_asr.py --model $m; done
+    python eval/run_asr.py --model nemo-hy                 # own recordings (eval/record.py)
+    python eval/run_asr.py --set fleurs --model nemo-hy    # FLEURS clips from eval/get_fleurs.py
     python eval/run_asr.py --summary
-    python eval/run_asr.py --set fleurs --model turbo-hy   # FLEURS clips from eval/get_fleurs.py
 
 One model per process so peak memory is measured cleanly. Each run appends one row to
 eval/results/asr_results.csv and writes per-clip output to eval/results/asr_<model>.tsv
@@ -31,14 +30,14 @@ FIELDS = ["set", "model", "device", "dtype", "clips", "cer", "wer", "lat_mean", 
           "load_s", "date"]
 
 
-def run(model: str, device: str, dtype: str, clip_set: str) -> None:
+def run(model: str, device: str, clip_set: str) -> None:
     os.environ.setdefault("HF_HUB_OFFLINE", "1")
     rows = [r for r in load_manifest(SETS[clip_set]) if r["reference"].strip()]
     if not rows:
         raise SystemExit("no clips with a reference transcript in the manifest")
 
     t0 = time.monotonic()
-    asr = load_asr(model, pick_device(device), dtype)
+    asr = load_asr(model, pick_device(device))
     load_s = time.monotonic() - t0
     asr.transcribe(np.zeros(16000, dtype=np.float32))  # warm-up, not measured
 
@@ -65,7 +64,7 @@ def run(model: str, device: str, dtype: str, clip_set: str) -> None:
 
     lats_a = np.array(lats)
     row = dict(
-        set=clip_set, model=model, device=pick_device(device), dtype=dtype, clips=len(rows),
+        set=clip_set, model=model, device=pick_device(device), dtype="float32", clips=len(rows),
         cer=f"{c_err / c_tot:.4f}", wer=f"{w_err / w_tot:.4f}",
         lat_mean=f"{lats_a.mean():.2f}", lat_p90=f"{np.percentile(lats_a, 90):.2f}", lat_max=f"{lats_a.max():.2f}",
         rtf=f"{lats_a.sum() / audio_s:.3f}", peak_rss_gb=f"{peak_rss_gb():.2f}", load_s=f"{load_s:.0f}",
@@ -94,14 +93,13 @@ def summary() -> None:
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
     p.add_argument("--model", choices=sorted(MODELS))
-    p.add_argument("--device", default="auto", choices=["auto", "mps", "cpu"])
-    p.add_argument("--dtype", default="float16", choices=["float16", "float32"])
+    p.add_argument("--device", default="cpu", choices=["auto", "mps", "cpu"])
     p.add_argument("--set", default="own", choices=sorted(SETS), help="own recordings or FLEURS clips")
     p.add_argument("--summary", action="store_true")
     a = p.parse_args()
     if a.summary:
         summary()
     elif a.model:
-        run(a.model, a.device, a.dtype, a.set)
+        run(a.model, a.device, a.set)
     else:
         p.error("give --model or --summary")

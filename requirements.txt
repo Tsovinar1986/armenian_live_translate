@@ -2,9 +2,10 @@
 numpy>=1.26
 sounddevice>=0.5          # PortAudio capture (mic + BlackHole)
 soxr>=1.0                 # streaming resampler 48 kHz -> 16 kHz
-torch>=2.7                # MPS backend for ASR
+torch>=2.7                # ASR, VAD and speaker models
 torchaudio>=2.7.1         # required by speechbrain
-transformers>=5.0         # Whisper / MMS ASR, NLLB tokenizer
+transformers>=5.0         # NLLB tokenizer
+nemo_toolkit[asr]>=2.0    # NVIDIA FastConformer Armenian ASR
 sentencepiece>=0.2
 ctranslate2>=4.5          # NLLB int8 inference on CPU
 silero-vad>=6.0           # voice activity detection

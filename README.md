@@ -65,7 +65,6 @@ python -m livetr --meter                 # talk -> 'mic' bar moves; play a video
 ```bash
 python -m livetr                                   # default mic + "BlackHole" device
 python -m livetr --mic "MacBook" --system 3        # pick devices by name part or index
-python -m livetr --asr buzz                        # another ASR model
 python -m livetr --file call.wav                   # replay a recording in real time (no devices needed)
 python -m livetr --no-mic                          # only the call side
 ```
@@ -77,7 +76,7 @@ default 8), `--speaker-threshold` (default 0.45), `--vad-threshold` (default 0.5
 ## 3. Architecture
 
 ```
- mic ──► DeviceSource ─┐                                      ┌─► ASR (Whisper fine-tune, MPS)
+ mic ──► DeviceSource ─┐                                      ┌─► ASR (NVIDIA FastConformer hy, CPU)
                        ├─► Converter ─► Segmenter (Silero VAD) ├─► Speaker: mic → "Me" / system → ECAPA + online clustering
  BlackHole ► DeviceSource┘   48k→16k mono    per source   queue ─┤    (one worker thread)
                                                               └─► Translation (NLLB-600M, CTranslate2 int8, CPU) ─► terminal
@@ -96,7 +95,7 @@ default 8), `--speaker-threshold` (default 0.45), `--vad-threshold` (default 0.5
 
 Design points:
 - **Utterance-level, not word streaming.** The VAD cuts at a 500 ms pause; each phrase is transcribed whole.
-  Whisper is much more accurate on full phrases, and a phrase still fits in 5 s: VAD 0.5 s, then ASR, speaker
+  ASR is more accurate on full phrases than on fragments, and a phrase still fits in 5 s: VAD 0.5 s, then ASR, speaker
   and translation. Phrases longer than 8 s are force-cut so ASR time stays bounded.
 - **One worker for both sources.** Two copies of the models do not fit in 8 GB RAM. If both sides talk at the
   same time, one waits; the wait is shown in each line (`wait`).
@@ -110,40 +109,37 @@ Design points:
 
 Target machine: MacBook Apple Silicon with **8 GB RAM**. Memory is the main constraint, then the 5 s budget.
 
-### ASR (Armenian speech → text): decision by measurement
-Zero-shot Whisper is weak on Armenian, so only Armenian fine-tunes are serious candidates.
+### ASR (Armenian speech → text): NVIDIA FastConformer Armenian, chosen by measurement
+Model: [`nvidia/stt_hy_fastconformer_hybrid_large_pc`](https://huggingface.co/nvidia/stt_hy_fastconformer_hybrid_large_pc)
+(~115M parameters, NeMo, CC-BY-4.0). Trained by NVIDIA on 296 h of Armenian (Common Voice, FLEURS, audiobooks
+and 214 h of NVIDIA's own data). It writes punctuation and capitals, which helps translation.
 
-| key | model | why consider it | risk |
-|---|---|---|---|
-| `buzz` | `BuzzASR/armenian` (Whisper large-v3 full fine-tune) | best published numbers among open models (card: FLEURS WER 11.9 %, Common Voice WER 2.4 %) | ~3 GB in fp16 on an 8 GB Mac; large-v3 decoder is slower |
-| `turbo-hy` | `Chillarmo/whisper-large-v3-turbo-armenian` | turbo has 4 decoder layers → much faster, ~1.6 GB | no trustworthy published WER, must measure |
-| `mms` | `facebook/mms-1b-all` + Armenian adapter | CTC: fast, cannot loop or hallucinate long text | usually less accurate, no punctuation |
-| `turbo-zeroshot` | `openai/whisper-large-v3-turbo` | reference point | expected to be clearly worse |
+Five candidates measured on the same 40 Google FLEURS Armenian test clips (`eval/get_fleurs.py`), M1 8 GB:
 
-Rejected without benchmarking: small/tiny Armenian Whisper fine-tunes (published WER 40–78 %); cloud ASR
-(not allowed); mlx-whisper (faster on Apple Silicon, but BuzzASR replaced Whisper's tokenizer, which
-mlx-whisper does not support. Worth revisiting for `turbo-hy`).
-
-Measured on 40 Google FLEURS Armenian test clips (`eval/get_fleurs.py`), M1 8 GB, fp16 on the GPU (MPS):
-
-| model | CER | WER | ASR time mean / p90 | GPU memory |
+| model | type | CER | WER | ASR time mean / p90 |
 |---|---|---|---|---|
-| `buzz` | **4.6 %** | **11.6 %** | 2.76 / 2.98 s | 3.5 GB |
-| `mms` | 5.2 % | 21.9 % | **0.61 / 0.74 s** | 2.3 GB |
-| `turbo-hy` | 12.6 % | 45.6 % | 2.44 / 2.73 s | 2.2 GB |
-| `turbo-zeroshot` | 21.5 % | 68.4 % | 2.37 / 2.68 s | — |
+| **`nvidia/stt_hy_fastconformer_hybrid_large_pc`** (CPU) | FastConformer RNNT, Armenian | **3.3 %** | **10.0 %** | **0.25 / 0.27 s** |
+| `BuzzASR/armenian` (MPS, fp16) | Whisper large-v3, Armenian fine-tune | 4.6 % | 11.6 % | 2.76 / 2.98 s |
+| `facebook/mms-1b-all` + `hye` adapter (MPS) | CTC, 1,100 languages | 5.2 % | 21.9 % | 0.61 / 0.74 s |
+| `Chillarmo/whisper-large-v3-turbo-armenian` (MPS) | Whisper turbo, Armenian fine-tune | 12.6 % | 45.6 % | 2.44 / 2.73 s |
+| `openai/whisper-large-v3-turbo` (MPS) | Whisper turbo, no fine-tune | 21.5 % | 68.4 % | 2.37 / 2.68 s |
 
-**Default: `buzz`**, the most accurate. Trade-off, stated honestly: it is not fast. Its ASR p90 (2.98 s) is above
-the ~2.5 s we first aimed for, so total latency sits close to the 5 s limit, and it uses the most memory.
-`mms` is the fallback (`--asr mms`): almost the same character error rate at a quarter of the time, but twice
-the word errors and no punctuation. FLEURS is read speech; buzz may have trained on FLEURS train, so its lead on
-spontaneous speech is checked in live tests (DECISIONS.md). Results: `eval/results/asr_results.csv`.
+The NVIDIA model is the most accurate **and** about 11x faster than the next best, so it leaves most of the 5 s
+budget free. It runs on the CPU: on this small model the CPU was as fast as the GPU (0.25 vs 0.28 s) without the
+GPU's slow first call. The other four were removed from the code after the comparison; the code that measured
+them is in git history (commit `fcc48a9`), the per-clip outputs in `eval/results/`.
+
+Honest caveats:
+- FLEURS is read speech, and both the NVIDIA model and BuzzASR list FLEURS in their training data (the test
+  split we use is held out). Spontaneous speech in calls is harder; see the live tests in DECISIONS.md.
+- Rejected without benchmarking: small/tiny Armenian Whisper fine-tunes (published WER 40–78 %); cloud ASR
+  (not allowed).
 
 ### Translation: NLLB-200 distilled 600M, CTranslate2 int8, on CPU
 Supports `hye_Armn → eng_Latn`, about 0.6 GB in int8, typically well under a second per sentence on CPU,
 and it leaves the GPU to ASR. The 1.3B version is better but needs roughly twice the memory. It is the first
 upgrade to try if translations are poor and memory allows. LLM-based translators were not considered:
-too large for 8 GB next to Whisper. Licence of NLLB weights: CC-BY-NC 4.0 (fine for this challenge, not for commercial use).
+too large for 8 GB next to the other models. Licence of NLLB weights: CC-BY-NC 4.0 (fine for this challenge, not for commercial use).
 
 ### Speakers: ECAPA-TDNN embeddings + online clustering
 `speechbrain/spkrec-ecapa-voxceleb` (192-d) on CPU, ~0.1 s per segment. Each call-side segment is compared
@@ -171,16 +167,16 @@ python eval/record.py --speaker davit
 python eval/record.py --speaker davit --free 6
 
 # 2. ASR: CER/WER, latency and peak memory per model (one process per model)
-for m in turbo-hy buzz mms turbo-zeroshot; do python eval/run_asr.py --model $m; done
+python eval/run_asr.py --model nemo-hy
 python eval/run_asr.py --summary
 
 # 2b. the same on Google FLEURS Armenian (read speech, many readers, reference text; no recording needed)
 python eval/get_fleurs.py                          # 40 test-split clips <= 10 s -> eval/data/fleurs/
-for m in turbo-hy buzz mms turbo-zeroshot; do python eval/run_asr.py --set fleurs --model $m; done
+python eval/run_asr.py --set fleurs --model nemo-hy
 
 # 3. translation of the reference sentences, and of real ASR output (error propagation)
 python eval/run_translate.py
-python eval/run_translate.py --from-asr buzz
+python eval/run_translate.py --from-asr nemo-hy
 
 # 4. speakers: same- vs different-speaker similarity, best threshold, simulated live clustering
 python eval/run_speakers.py
@@ -203,15 +199,15 @@ is listed in `TESTS.md`.
 - **One worker.** When both sides talk at the same time, one waits. That wait counts towards the 5 s.
 - **Phrase-level output.** Nothing is printed until the speaker pauses (or 8 s pass). Long sentences that are
   force-cut are translated in pieces, so the translation can be worse at the cut.
-- **Whisper can still hallucinate** on noise that the VAD lets through (music, typing). There is no text filter,
+- **ASR can still produce words from noise** that the VAD lets through (music, typing). There is no text filter,
   on purpose: such errors stay visible.
 - **8 GB RAM.** Large models plus a call app and a browser can cause swapping, which shows up as latency spikes.
   Check Activity Monitor → Memory → Swap Used.
 - No echo handling: use headphones.
 
 ## 7. What I would improve with more time
-- Measure and quantise further: int8 Whisper via CTranslate2 (faster-whisper) for the turbo fine-tune, or
-  mlx-whisper, to cut ASR latency and memory.
+- Try the CTC decoder of the same model and an Armenian language model for decoding (card: RNNT is more
+  accurate; an external LM may fix spelling of names).
 - Fine-tune on conversational Armenian audio recorded through a real call codec.
 - Stream partial results (show Armenian text while the person is still speaking, finalise at the pause).
 - Process both sources in parallel if memory allows, or prioritise the source that has waited longer.

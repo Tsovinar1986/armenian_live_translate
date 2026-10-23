@@ -128,3 +128,21 @@ translation, then pick the default.
 FLEURS test sentences with «», against the official English FLEURS translations: chrF 60.8 with «», 60.8 with "",
 16 sentences better, 15 worse. Quoted phrases are kept more often, but one sentence was dropped entirely.
 No measurable gain, so no extra code. (sacrebleu used for the score; eval-only, not in requirements.)
+
+## 2026-10-23 — ASR: NVIDIA FastConformer Armenian (`nemo-hy`); other candidates removed from the code
+Supersedes the buzz default above. Same 40 FLEURS clips: CER 3.3 %, WER 10.0 %, 0.25 s mean / 0.27 s p90 on CPU
+(MPS 0.28 s, with a slow first call). Better than buzz on accuracy (4.6 % / 11.6 %) and ~11x faster, so ASR no
+longer eats the 5 s budget.
+- Model card: trained on 296 h (Common Voice 17 48 h, FLEURS 12 h, Armenian audiobooks 22 h, NVIDIA proprietary
+  214 h); card reports FLEURS test WER 12.3 %, consistent with our 10.0 % on shorter clips. Licence CC-BY-4.0.
+- Caveat: FLEURS is in its training data (like buzz), so FLEURS favours both; live tests decide for real speech.
+  The large non-FLEURS share (incl. spontaneous-ish proprietary data) is a reason to expect it to hold up better.
+- Runs on CPU by default: as fast as MPS on this model, no MPS warm-up spike, and the GPU stays free.
+- Writes punctuation and capitals (`,` `։` `՞`), unlike MMS; translation gets sentence structure.
+- User asked to remove the other candidates from the code once the NVIDIA model won. Done: `livetr/asr.py` now
+  only holds `nemo-hy`. Evidence for the comparison stays in `eval/results/` and git history (`fcc48a9`).
+- Cost: `nemo_toolkit[asr]` is a large dependency (~70 extra packages); accepted for the accuracy/speed gain.
+- End-to-end replay (6 FLEURS clips, `--file`): ASR 0.2–0.3 s per phrase when the Mac is quiet, phrases printed
+  1.1–1.8 s after they end. Spikes (translation up to 10 s) were traced to the machine, not the code: a fixed numpy
+  workload varied 5.8x in the same minutes, while another project was rendering speech (`say`) in the background,
+  on battery, with ~4 GB swap. Latency must be measured on a quiet Mac (other jobs stopped, on power).
