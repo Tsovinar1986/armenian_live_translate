@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-DEFAULT_MODEL_DIR = "models/nllb-200-distilled-600M-ct2-int8"
+DEFAULT_MODEL_DIR = "models/nllb-200-distilled-1.3B-ct2-int8"
 
 
 class NllbTranslator:

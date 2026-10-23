@@ -198,3 +198,18 @@ inside words (`քարանձավ` -> "…մի" + "Անցավ…"). Test call (cle
 | 15 s | 3 | 4.1 % / 10.2 % | 2.1 / 2.8 s | 9/9 |
 Chosen: 15 s. Trade-off: in a long monologue the first words appear later (up to ~15 s after they were said); the
 brief measures latency from the end of a phrase, which stays < 3 s. Not done: cutting at the quietest moment.
+
+## 2026-10-23 — Translation: NLLB 1.3B instead of 600M (600M stays as fallback)
+`eval/run_mt_fleurs.py`: 150 FLEURS test sentences, Armenian -> English, chrF against the official English FLEURS
+translations; plus the 6 colloquial phrases from the live mic test (`eval/colloquial.tsv`, judged by eye).
+| model | chrF | MT time mean / p90 / max | memory (int8) |
+|---|---|---|---|
+| NLLB 600M | 60.1 | 1.00 / 1.43 / 2.59 s | 0.6 GB |
+| NLLB 1.3B | 63.5 | 1.81 / 2.53 / 4.68 s | 1.4 GB |
+Colloquial: 1.3B fixes the worst errors (`ինչպես ես ինչ կա, չկա` -> "Hi, how are you?" instead of "Hello, as I am,
+there is no such thing"; `չատերը` -> "chat" instead of "chessboard").
+Whole program with 1.3B, test call, 15 s phrase limit, on battery: latency p50 3.0 s, p90 3.6 s, max 4.0 s, 0 over
+5 s; speakers 9/9; peak memory 3.6 GB (2.8 GB with 600M).
+Chosen: 1.3B, because translation was the weakest stage (tip 2: improve the weakest link). Trade-off: the latency
+margin shrinks from ~2 s to ~1 s. If the practice call (with a call app using CPU) goes over 5 s, the default goes
+back to 600M. Conversion needs `load_as_float16=True, low_cpu_mem_usage=True` to fit in 8 GB RAM.

@@ -22,7 +22,7 @@ from livetr.translate import NllbTranslator  # noqa: E402
 def main() -> None:
     os.environ.setdefault("HF_HUB_OFFLINE", "1")
     p = argparse.ArgumentParser()
-    p.add_argument("--nllb-dir", default=str(ROOT / "models/nllb-200-distilled-600M-ct2-int8"))
+    p.add_argument("--nllb-dir", default=str(ROOT / "models/nllb-200-distilled-1.3B-ct2-int8"))
     p.add_argument("--from-asr", default=None, help="use eval/results/asr_<model>.tsv hypotheses as input")
     a = p.parse_args()
 

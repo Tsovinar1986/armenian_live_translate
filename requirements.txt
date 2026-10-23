@@ -12,3 +12,4 @@ silero-vad>=6.0           # voice activity detection
 speechbrain>=1.1          # ECAPA speaker embeddings
 huggingface_hub>=1.0      # model downloads
 pytest>=8                 # tests
+sacrebleu>=2.4            # chrF score in eval/run_mt_fleurs.py (evaluation only)
