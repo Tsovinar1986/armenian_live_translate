@@ -1,6 +1,6 @@
 hy	meaning	status
-Բարեւ, ինչպես ես ինչ կա, չկա։	Hi, how are you, what's up?	confirmed by speaker
-Ի՞նչ ես անում։	What are you doing?	confirmed by speaker
+Բարեւ, ինչպես ես ինչ կա, չկա։	Hi, how are you, what's up?	standard phrase; meaning written by Claude, not contested by the speaker
+Ի՞նչ ես անում։	What are you doing?	standard phrase; meaning written by Claude, not contested by the speaker
 Ի՞նչ կարելի է անել էս դեպքում, եթե հայերենի հիման վրա չատերը նորմալ չի աշխատում։	What can be done in this case if chatbots based on Armenian don't work properly?	confirmed by speaker (չատերը = chatbots)
 Եղանակը էսօր մի քիչ ցրտոտ ա, բայց շատ լավ ա մազերս ներկեցի։	The weather is a bit cold today, but it's great, I dyed my hair.	unconfirmed: Armenian is the ASR output, meaning written by Claude
 Բնական կենտրոն գնամ, տեսնեմ՝ ինչ է իրենից ներկայացնում այդ ամեն ինչը։	I'll go to the center, see what it's all about.	unconfirmed: Armenian is the ASR output (Բնական may be misheard), meaning written by Claude
