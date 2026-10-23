@@ -115,3 +115,16 @@ Reading:
   Activity Monitor or `torch.mps.driver_allocated_memory()` instead.
 Next: replay the same recorded conversation with buzz and with mms (`--file`) to compare end-to-end latency and
 translation, then pick the default.
+
+## 2026-10-23 — Default ASR: buzz (user's choice: "the most accurate")
+- Lowest CER and WER on FLEURS (4.6 % / 11.6 %), no broken `�` outputs.
+- Breaks our own first criterion (ASR p90 ≤ ~2.5 s): buzz p90 is 2.98 s. Accepted for accuracy, with a check:
+  if the live test goes over 5 s, or the Mac swaps during a call, switch the default to `mms`.
+- GPU memory (Metal, `torch.mps.driver_allocated_memory()` after an 8 s phrase): buzz 3.47 GB, mms 2.30 GB,
+  turbo-hy 2.21 GB. Plus NLLB (~0.6 GB) and ECAPA: ~5 GB for the program on an 8 GB Mac.
+
+## 2026-10-23 — Armenian quotes «» are NOT converted before translation
+`«»` are the Armenian quotation marks (= English ""), and NLLB treats them as unknown tokens. Tested on all 33
+FLEURS test sentences with «», against the official English FLEURS translations: chrF 60.8 with «», 60.8 with "",
+16 sentences better, 15 worse. Quoted phrases are kept more often, but one sentence was dropped entirely.
+No measurable gain, so no extra code. (sacrebleu used for the score; eval-only, not in requirements.)

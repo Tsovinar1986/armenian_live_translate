@@ -124,9 +124,20 @@ Rejected without benchmarking: small/tiny Armenian Whisper fine-tunes (published
 (not allowed); mlx-whisper (faster on Apple Silicon, but BuzzASR replaced Whisper's tokenizer, which
 mlx-whisper does not support. Worth revisiting for `turbo-hy`).
 
-Default is `turbo-hy` **provisionally** (fits in memory with room to spare). The final choice is the model with
-the lowest CER whose p90 latency on our clips is ≤ ~2.5 s and that does not push the Mac into swap.
-Results: `eval/results/asr_results.csv`.
+Measured on 40 Google FLEURS Armenian test clips (`eval/get_fleurs.py`), M1 8 GB, fp16 on the GPU (MPS):
+
+| model | CER | WER | ASR time mean / p90 | GPU memory |
+|---|---|---|---|---|
+| `buzz` | **4.6 %** | **11.6 %** | 2.76 / 2.98 s | 3.5 GB |
+| `mms` | 5.2 % | 21.9 % | **0.61 / 0.74 s** | 2.3 GB |
+| `turbo-hy` | 12.6 % | 45.6 % | 2.44 / 2.73 s | 2.2 GB |
+| `turbo-zeroshot` | 21.5 % | 68.4 % | 2.37 / 2.68 s | — |
+
+**Default: `buzz`**, the most accurate. Trade-off, stated honestly: it is not fast. Its ASR p90 (2.98 s) is above
+the ~2.5 s we first aimed for, so total latency sits close to the 5 s limit, and it uses the most memory.
+`mms` is the fallback (`--asr mms`): almost the same character error rate at a quarter of the time, but twice
+the word errors and no punctuation. FLEURS is read speech; buzz may have trained on FLEURS train, so its lead on
+spontaneous speech is checked in live tests (DECISIONS.md). Results: `eval/results/asr_results.csv`.
 
 ### Translation: NLLB-200 distilled 600M, CTranslate2 int8, on CPU
 Supports `hye_Armn → eng_Latn`, about 0.6 GB in int8, typically well under a second per sentence on CPU,
@@ -169,7 +180,7 @@ for m in turbo-hy buzz mms turbo-zeroshot; do python eval/run_asr.py --set fleur
 
 # 3. translation of the reference sentences, and of real ASR output (error propagation)
 python eval/run_translate.py
-python eval/run_translate.py --from-asr turbo-hy
+python eval/run_translate.py --from-asr buzz
 
 # 4. speakers: same- vs different-speaker similarity, best threshold, simulated live clustering
 python eval/run_speakers.py

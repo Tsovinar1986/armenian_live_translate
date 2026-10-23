@@ -21,7 +21,7 @@ Automated tests: `pytest` (pure logic only, no models or audio devices needed).
 - [ ] CER/WER metric is correct on known examples. (automated: `test_metrics.py`)
 
 ## R3 — English translation
-- [ ] Armenian quotes `«»` (unknown to NLLB): does replacing them with `"` change translations?
+- [x] Armenian quotes `«»` (unknown to NLLB): replacing them with `"` gives no gain (chrF 60.8 = 60.8 on 33 FLEURS sentences).
 - [ ] `eval/run_translate.py` on the sentence list: every line understandable (judged by an Armenian speaker).
 - [ ] Empty ASR result → no translation call, nothing printed. (automated: `test_pipeline.py`)
 

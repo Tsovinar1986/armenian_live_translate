@@ -10,7 +10,7 @@ import numpy as np
 
 from livetr.asr import MODELS
 
-DEFAULT_ASR = "turbo-hy"  # provisional, see DECISIONS.md -> replace with the measured winner
+DEFAULT_ASR = "buzz"  # most accurate on FLEURS; see DECISIONS.md (2026-10-23)
 
 
 def build_parser() -> argparse.ArgumentParser:
