@@ -18,8 +18,8 @@ The grey part of each header is the measured latency from the end of the phrase 
 followed by the time per stage (queue wait, ASR, speaker embedding, translation). It turns red above 5 s.
 
 > **Status:** code and unit tests are complete. The ASR model and the speaker threshold were chosen by measurement
-> on the target Mac (M1, 8 GB; see [Models and why](#4-models-and-why) and `DECISIONS.md`). Still to verify live:
-> the microphone side (`Me`) and a call with two or more people on the call side.
+> on the target Mac (M1, 8 GB; see [Models and why](#4-models-and-why) and `DECISIONS.md`). Tested live: the
+> microphone side and a 3-voice test call through BlackHole. Not yet tested: a real call app with real people.
 
 ---
 
@@ -208,7 +208,7 @@ Measured on an M1 MacBook with 8 GB (details and all numbers in `DECISIONS.md`).
 |---|---|---|
 | Is the Armenian recognised? | Yes on clear speech: CER 3.3 % / WER 10 % on single FLEURS sentences, 5.8 % / 12.6 % on a test call with long turns | `eval/run_asr.py`, `eval/score_call.py` |
 | Is the English understandable? | Mostly. Translation errors follow ASR errors: `Քաղաքակրթություն` (civilization) heard as `Քաղաքականություն` (politics) gave "The word politics comes from the Latin syphilis" | `chats/program-output/2026-10-23-test-call-live-blackhole.md` |
-| Under 5 seconds? | Yes: p50 1.3 s, max 1.6 s, played live through BlackHole | `--stats` |
+| Under 5 seconds? | Yes: p50 1.3 s, max 1.6 s through BlackHole; 0.8–1.5 s on the microphone | `--stats` |
 | Are speakers kept apart? | 3 of 3 voices, 9/9 turns, also through the Opus codec calls use | `eval/score_call.py` |
 | Local only? | Yes, runs with all network blocked | DECISIONS.md |
 
@@ -219,7 +219,9 @@ What does not work well, or is not proven yet:
   which costs accuracy (CER 3.3 % on whole sentences vs 5.7 % in the test call). Example: `քարանձավ` (cave) was
   split into "…մի։" and "Անցավ…", so the cave is missing from the English.
 - **Two very similar voices** were never tested: the Armenian test data has only one man and two women.
-- **The microphone side (`Me`)** works in the level meter but has not been tested in a full conversation.
+- **Colloquial Armenian translates badly.** Live on the mic, ASR got spontaneous speech right (`էս`, `ա`), but
+  NLLB turned `ինչ կա, չկա` ("what's up") into "there is no such thing" and `չատերը` ("the chats") into
+  "chessboard". NLLB was trained mostly on formal text.
 - **The Mac must be quiet**: with another heavy job running on battery, single phrases took up to 10 s.
 
 ## 7. Known limitations

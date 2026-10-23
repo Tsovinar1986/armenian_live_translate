@@ -23,4 +23,5 @@ read next to what the program actually produced.
 | File | Run |
 |---|---|
 | `program-output/2026-10-23-live-test-1-turbo-hy.md` | YouTube conversation, call side only, old `turbo-hy` model: 30 phrases, latency p90 4.51 s |
+| `program-output/2026-10-23-mic-live-me.md` | Author speaking into the MacBook mic: 6 phrases, all `Me`, latency 0.8–1.5 s |
 | `program-output/2026-10-23-test-call-live-blackhole.md` | Test call (3 known voices, 9 turns) played live through BlackHole, current model: 9/9 speaker turns, latency max 1.6 s |

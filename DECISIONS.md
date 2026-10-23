@@ -180,3 +180,10 @@ Reading:
 ## 2026-10-23 — Local only, verified
 The program ran end to end inside a macOS sandbox that blocks all outgoing network connections
 (`sandbox-exec ... (deny network-outbound ...)`; a test request to huggingface.co failed inside it).
+
+## 2026-10-23 — Microphone side live
+Author speaking colloquial Armenian into the built-in mic (after granting microphone permission; before that
+macOS delivered digital silence, −90 dB): 6 phrases, all `Me`, latency 0.8–1.5 s. ASR handled colloquial forms
+well; NLLB mistranslated idioms and loanwords (`ինչ կա, չկա` → "there is no such thing", `չատերը` → "chessboard").
+Translation of spoken, colloquial Armenian is now the weakest part. Options for later: NLLB 1.3B (memory),
+or a small local LLM for translation (memory and latency); not tried within the time budget.

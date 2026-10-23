@@ -26,7 +26,7 @@ Automated tests: `pytest` (pure logic only, no models or audio devices needed).
 - [x] Empty ASR result → no translation call, nothing printed. (automated: `test_pipeline.py`)
 
 ## R4 — Speaker identification
-- [x] Mic segments always labelled `Me`. (automated; live check still to do)
+- [x] Mic segments always labelled `Me`. (automated; live: 6/6 phrases `Me`, 0.8–1.5 s, 2026-10-23)
 - [x] Two different call-side voices get different labels. (automated with synthetic embeddings; test call: 3 of 3
   voices kept apart, 9/9 turns, also live through BlackHole and through Opus 16 kbps)
 - [ ] Same voice keeps its label for the whole session (10+ minutes). (automated: stable centroid test; live only 2.5 min so far)
