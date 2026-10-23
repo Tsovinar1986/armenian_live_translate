@@ -155,3 +155,28 @@ or ~0.5–0.9 (3 s crops). The valley is 0.4–0.5 in both cases, so 0.45 stays:
 and it sits below the same-reader peak even for short phrases.
 Limits: read speech, studio-like audio, no call codec. Two similar same-gender voices can reach 0.4–0.5 and may be
 merged; that is the known hard case and needs a live check. Pair similarities are in `eval/results/`.
+
+## 2026-10-23 — End-to-end test call with known speakers (`eval/make_test_call.py`, `eval/score_call.py`)
+FLEURS Armenian has only **three voices**: one man and two women (every male test clip matches every other male
+clip at >= 0.6; women form two groups). So the ASR test set also had only 3 speakers, and a 4-person test call is
+not possible from FLEURS. A first version of the test call took "two men" who were the same man reading two
+sentences (similarity 0.74); the program merged them, correctly. The builder now accepts a reader only if all
+their clips are < 0.35 against the other readers.
+Test call: 3 speakers (2 women, 1 man), 9 turns, 9 different sentences, 144 s; every speaker comes back twice.
+| run | speaker turns right | speakers found | CER / WER | latency p50 / max |
+|---|---|---|---|---|
+| `--file`, clean | 9/9 | 3 of 3 (+1 `Speaker ?`) | 5.7 % / 13.0 % | 1.2 / 1.5 s |
+| `--file`, through Opus 16 kbps | 9/9 | 3 of 3 (+1 `Speaker ?`) | 5.4 % / 12.2 % | 1.2 / 1.5 s |
+| **live**: played through Multi-Output → BlackHole | 9/9 | 3 of 3 (+1 `Speaker ?`) | 5.8 % / 12.6 % | **1.3 / 1.6 s** |
+Reading:
+- Latency: ~1.3 s, far under 5 s; translation (0.7 s) is now the slowest stage, ASR 0.2 s.
+- The call codec barely matters for ASR or speakers.
+- CER 5.7 % vs 3.3 % on single clips: turns here are 10–29 s, so the VAD force-cuts at 8 s, sometimes inside a
+  word, and both halves are transcribed and translated separately. Possible fix: cut at the quietest moment of
+  the last ~1 s instead of exactly at 8 s.
+- `Speaker ?` appeared once, on a short tail after a cut (< 1 s): by design (short segments don't get a guess).
+- Not covered: two *very* similar voices (FLEURS has none), spontaneous speech, the mic side.
+
+## 2026-10-23 — Local only, verified
+The program ran end to end inside a macOS sandbox that blocks all outgoing network connections
+(`sandbox-exec ... (deny network-outbound ...)`; a test request to huggingface.co failed inside it).

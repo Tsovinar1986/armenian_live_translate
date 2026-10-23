@@ -188,6 +188,11 @@ python eval/run_speakers.py
 python eval/fleurs_speakers.py                     # threshold from FLEURS same-sentence pairs
 python eval/fleurs_speakers.py --crop-s 3          # the same on 3 s crops (short live phrases)
 
+# 5. whole program on a test call with known speakers (3 FLEURS voices, 9 turns, + Opus 16 kbps copy)
+python eval/make_test_call.py
+python -m livetr --file eval/data/test_call_opus16k.wav --no-mic --no-color | tee eval/data/test_call_out.txt
+python eval/score_call.py eval/data/test_call_out.txt
+
 # 5. end-to-end latency on a recording, without a call
 python -m livetr --file some_call.wav
 ```
@@ -195,7 +200,29 @@ python -m livetr --file some_call.wav
 Unit tests (no models or audio devices needed): `pytest`. What is tested and what is checked by hand
 is listed in `TESTS.md`.
 
-## 6. Known limitations
+## 6. Results: what works and what doesn't
+
+Measured on an M1 MacBook with 8 GB (details and all numbers in `DECISIONS.md`).
+
+| Question from the brief | Result | Evidence |
+|---|---|---|
+| Is the Armenian recognised? | Yes on clear speech: CER 3.3 % / WER 10 % on single FLEURS sentences, 5.8 % / 12.6 % on a test call with long turns | `eval/run_asr.py`, `eval/score_call.py` |
+| Is the English understandable? | Mostly. Translation errors follow ASR errors: `Քաղաքակրթություն` (civilization) heard as `Քաղաքականություն` (politics) gave "The word politics comes from the Latin syphilis" | `chats/program-output/2026-10-23-test-call-live-blackhole.md` |
+| Under 5 seconds? | Yes: p50 1.3 s, max 1.6 s, played live through BlackHole | `--stats` |
+| Are speakers kept apart? | 3 of 3 voices, 9/9 turns, also through the Opus codec calls use | `eval/score_call.py` |
+| Local only? | Yes, runs with all network blocked | DECISIONS.md |
+
+What does not work well, or is not proven yet:
+- **Spontaneous, fast speech** is much harder than read speech. A YouTube conversation (with an older model)
+  gave many wrong words; the current model has not yet been tested on such speech.
+- **Long turns are cut every 8 s**, sometimes inside a word: each part is transcribed and translated on its own,
+  which costs accuracy (CER 3.3 % on whole sentences vs 5.7 % in the test call). Example: `քարանձավ` (cave) was
+  split into "…մի։" and "Անցավ…", so the cave is missing from the English.
+- **Two very similar voices** were never tested: the Armenian test data has only one man and two women.
+- **The microphone side (`Me`)** works in the level meter but has not been tested in a full conversation.
+- **The Mac must be quiet**: with another heavy job running on battery, single phrases took up to 10 s.
+
+## 7. Known limitations
 - **Accuracy depends on the ASR model's training data** (296 h of Eastern Armenian, much of it read speech:
   Common Voice, FLEURS, audiobooks). Our 3.3 % CER is on read FLEURS speech, which the model saw in training
   (other split). Fast conversational speech, dialects, Western Armenian and code-switching with Russian or English
@@ -215,10 +242,11 @@ is listed in `TESTS.md`.
   on battery). Run on power with other heavy apps closed; check Activity Monitor → Memory → Swap Used.
 - No echo handling: use headphones.
 
-## 7. What I would improve with more time
+## 8. What I would improve with more time
 - Try the CTC decoder of the same model and an Armenian language model for decoding (card: RNNT is more
   accurate; an external LM may fix spelling of names).
 - Fine-tune on conversational Armenian audio recorded through a real call codec.
+- Cut long turns at the quietest moment near 8 s instead of exactly at 8 s.
 - Stream partial results (show Armenian text while the person is still speaking, finalise at the pause).
 - Process both sources in parallel if memory allows, or prioritise the source that has waited longer.
 - Better diarization on the call side: overlap-aware segmentation (pyannote/diart) inside long segments, and
@@ -226,7 +254,7 @@ is listed in `TESTS.md`.
 - Translate with context (previous sentence) for pronouns and cut sentences.
 - A small labelled set of real call recordings for regression testing of every change.
 
-## 8. Repository layout
+## 9. Repository layout
 ```
 livetr/            program (python -m livetr)
 eval/              recording + benchmark scripts, sentence list, results (no audio)
