@@ -5,11 +5,11 @@ terminal with time and speaker. Your microphone is labelled `Me`; people on the 
 `Speaker 1`, `Speaker 2`, … All models run locally.
 
 ```
-[00:01:12] Speaker 1  (2.1s · wait 0.0 · asr 1.3 · spk 0.1 · mt 0.2)
+[00:01:12] Speaker 1  (1.7s · wait 0.5 · asr 0.2 · spk 0.1 · mt 0.9)
 HY: Բարև, ինչպե՞ս ես։
 EN: Hi, how are you?
 
-[00:01:15] Me  (1.8s · wait 0.0 · asr 1.2 · mt 0.2)
+[00:01:15] Me  (1.4s · wait 0.5 · asr 0.2 · mt 0.7)
 HY: Լավ եմ, շնորհակալություն։
 EN: I'm fine, thank you.
 ```
@@ -17,8 +17,9 @@ EN: I'm fine, thank you.
 The grey part of each header is the measured latency from the end of the phrase to the printed line,
 followed by the time per stage (queue wait, ASR, speaker embedding, translation). It turns red above 5 s.
 
-> **Status:** code and unit tests are complete. Model choice and thresholds are marked *provisional* until
-> they have been measured on the target Mac (see [Measuring](#measuring) and `DECISIONS.md`).
+> **Status:** code and unit tests are complete. The ASR model and the speaker threshold were chosen by measurement
+> on the target Mac (M1, 8 GB; see [Models and why](#4-models-and-why) and `DECISIONS.md`). Still to verify live:
+> the microphone side (`Me`) and a call with two or more people on the call side.
 
 ---
 
@@ -87,7 +88,7 @@ default 8), `--speaker-threshold` (default 0.45), `--vad-threshold` (default 0.5
 | `livetr/audio/devices.py` | find devices by index or name | name/index → device index (error if 0 or 2+ matches) |
 | `livetr/audio/capture.py` | live device or WAV file; down-mix + streaming resample | device → 16 kHz mono float32 blocks |
 | `livetr/segmenter.py` | VAD state machine | blocks → `Segment` (audio + end-of-phrase time) |
-| `livetr/asr.py` | candidate ASR models behind one interface | audio → Armenian text |
+| `livetr/asr.py` | NVIDIA FastConformer Armenian (NeMo) | audio → Armenian text |
 | `livetr/speakers.py` | `Me` / embeddings / online clustering | segment → label |
 | `livetr/translate.py` | NLLB via CTranslate2 | Armenian → English |
 | `livetr/output.py` | formatting, colours, latency stats | result → terminal |
@@ -136,8 +137,9 @@ Honest caveats:
   (not allowed).
 
 ### Translation: NLLB-200 distilled 600M, CTranslate2 int8, on CPU
-Supports `hye_Armn → eng_Latn`, about 0.6 GB in int8, typically well under a second per sentence on CPU,
-and it leaves the GPU to ASR. The 1.3B version is better but needs roughly twice the memory. It is the first
+Supports `hye_Armn → eng_Latn`, about 0.6 GB in int8. Measured 0.9 s mean, 1.4 s max per phrase in a live
+test with 8 s phrases; it is now the slowest stage, since ASR takes ~0.25 s. ASR and translation both run on the
+CPU, one after the other in the same worker, so they do not compete. The 1.3B version is better but needs roughly twice the memory. It is the first
 upgrade to try if translations are poor and memory allows. LLM-based translators were not considered:
 too large for 8 GB next to the other models. Licence of NLLB weights: CC-BY-NC 4.0 (fine for this challenge, not for commercial use).
 
@@ -145,6 +147,9 @@ too large for 8 GB next to the other models. Licence of NLLB weights: CC-BY-NC 4
 `speechbrain/spkrec-ecapa-voxceleb` (192-d) on CPU, ~0.1 s per segment. Each call-side segment is compared
 by cosine similarity to the running mean of each known speaker. Below the threshold, it starts a new speaker.
 Labels are never renamed, so a person keeps the same label for the session.
+Threshold 0.45, taken from data (`eval/fleurs_speakers.py`): on 832 pairs of FLEURS recordings of the same
+sentence, man/woman pairs (certainly different people) never exceed 0.30, the same reader twice scores 0.5–1.0,
+and the gap between the two lies at 0.4–0.5, also for 3 s phrases.
 Segments shorter than 1 s give unreliable embeddings. They never create a speaker, and get a label only if they
 are very close to a known one; otherwise they print as `Speaker ?`. An honest "unknown" is better than a
 confident wrong label.
@@ -191,8 +196,10 @@ Unit tests (no models or audio devices needed): `pytest`. What is tested and wha
 is listed in `TESTS.md`.
 
 ## 6. Known limitations
-- **Accuracy depends on the ASR fine-tune's training data** (read speech: Common Voice, FLEURS). Fast
-  conversational speech, dialects, Western Armenian and code-switching with Russian or English will be worse.
+- **Accuracy depends on the ASR model's training data** (296 h of Eastern Armenian, much of it read speech:
+  Common Voice, FLEURS, audiobooks). Our 3.3 % CER is on read FLEURS speech, which the model saw in training
+  (other split). Fast conversational speech, dialects, Western Armenian and code-switching with Russian or English
+  will be worse. Translation errors grow with ASR errors.
 - **Call audio is compressed** by the call app (Zoom/Meet codecs, noise suppression). This hurts both ASR and
   speaker embeddings compared with the clean clips in the eval set.
 - **Speaker separation is per utterance.** If two people speak in one segment (interruptions, overlap), the
@@ -203,8 +210,9 @@ is listed in `TESTS.md`.
   force-cut are translated in pieces, so the translation can be worse at the cut.
 - **ASR can still produce words from noise** that the VAD lets through (music, typing). There is no text filter,
   on purpose: such errors stay visible.
-- **8 GB RAM.** Large models plus a call app and a browser can cause swapping, which shows up as latency spikes.
-  Check Activity Monitor → Memory → Swap Used.
+- **8 GB RAM and a busy CPU.** The program needs ~2.8 GB. With a call app, a browser and other jobs, the Mac swaps
+  or the CPU is shared, and latency spikes (we saw single phrases at 10 s while another job ran in the background,
+  on battery). Run on power with other heavy apps closed; check Activity Monitor → Memory → Swap Used.
 - No echo handling: use headphones.
 
 ## 7. What I would improve with more time
