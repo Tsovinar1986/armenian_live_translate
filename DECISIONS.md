@@ -67,3 +67,31 @@ read Armenian with reference text from many readers, without depending on other 
 - Limits: read speech, clean studio-ish audio, no call codec. It measures ASR only, not speakers or live latency.
 First result, turbo-hy fp16 on MPS: CER 13.1 %, WER 45.4 %, 2.45 s mean ASR time. 8 of 40 outputs contain `�`:
 the model emits incomplete UTF-8 byte tokens for Armenian letters (decoding is whole-sequence, so not our bug).
+
+## 2026-10-23 — ASR length limit: max_length=228 (4 prompt + 224 text tokens)
+Armenian costs ~15 Whisper tokens per second of speech (up to 21 on FLEURS). The old cap of 160 new tokens cut
+4 of 40 FLEURS clips mid-letter (ending in `�`); live phrases are often a full 8 s, so fast speakers were cut too.
+224 text tokens cover 8 s at 28 tokens/s; the repetition guard (`no_repeat_ngram_size=3`) still stops loops,
+so the higher cap only costs time when the speech really is that long. Passed as `max_length` (not
+`max_new_tokens`), because the model's saved config also sets `max_length` and both together printed a
+transformers warning for every phrase. turbo-hy on FLEURS: CER 13.1 % -> 12.6 %, latency unchanged.
+
+## 2026-10-23 — NLLB tokenizer warning at start-up is a false alarm (kept visible, not silenced)
+transformers warns "incorrect regex pattern … will lead to incorrect tokenization" (a check written for Mistral).
+Checked: our tokenizer and the original `sentencepiece.bpe.model` give identical tokens on 65 of 66 Armenian
+sentences (24 own + 40 FLEURS + 2 edge cases). The one difference is `«`, which is `<unk>` in the original
+model as well, so behaviour is the same. Side finding: `«` and `»` are unknown to NLLB, and the ASR often
+outputs them. Replacing them with `"` before translation might help; measure before changing.
+
+## 2026-10-23 — Live test 1: YouTube conversation through BlackHole (`--no-mic`), turbo-hy
+Setup: video played to Multi-Output Device, `python -m livetr --no-mic --no-color | tee -i …` (log local only).
+- 30 call-side phrases, ~3.5 min. Latency p50 4.16 s, p90 4.51 s, max 4.69 s, 0 over 5 s.
+  Stages: ASR mean 2.70 s (max 3.43), translation 0.94 s (max 1.42), speaker 0.15 s, queue wait 0.21 s.
+- Almost every phrase was force-cut at 8 s: the speakers never paused 0.5 s. Long segments make ASR slower
+  and split sentences, which hurts translation.
+- Speakers: 2 people, only 2 switches (S1 -> S2 -> S1); S1 got its label back correctly. Too few switches to
+  judge separation; needs a second video with more back-and-forth.
+- Text: spontaneous speech gives many ASR errors (`մջջաավյր` for `միջավայր`), and translation turns them into
+  nonsense in places. Consistent with FLEURS WER ~45 %.
+Conclusion: the 5 s limit holds, but with only ~0.3 s margin at worst. ASR time is the lever (faster runtime
+such as MLX 8-bit, or a shorter input window), to be decided after the model comparison.
