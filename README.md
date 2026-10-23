@@ -208,7 +208,7 @@ Measured on an M1 MacBook with 8 GB (details and all numbers in `DECISIONS.md`).
 | Question from the brief | Result | Evidence |
 |---|---|---|
 | Is the Armenian recognised? | Yes on clear speech: CER 3.3 % / WER 10 % on single FLEURS sentences, 4.1 % / 10.2 % on a test call with long turns | `eval/run_asr.py`, `eval/score_call.py` |
-| Is the English understandable? | Mostly. Translation errors follow ASR errors: `Քաղաքակրթություն` (civilization) heard as `Քաղաքականություն` (politics) gave "The word politics comes from the Latin syphilis" | `chats/program-output/2026-10-23-test-call-live-blackhole.md` |
+| Is the English understandable? | Mostly. Translation errors follow ASR errors: `Քաղաքակրթություն` (civilization) heard as `Քաղաքականություն` (politics) gave "The word politics comes from the Latin syphilis" | `eval/results/live-runs/2026-10-23-test-call-live-blackhole.md` |
 | Under 5 seconds? | Yes: p50 1.3 s, max 1.6 s through BlackHole (8 s limit); max 2.8 s with the 15 s limit; 0.8–1.5 s on the microphone | `--stats` |
 | Are speakers kept apart? | 3 of 3 voices, 9/9 turns, also through the Opus codec calls use | `eval/score_call.py` |
 | Local only? | Yes, runs with all network blocked | DECISIONS.md |
