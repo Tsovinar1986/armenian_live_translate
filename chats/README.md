@@ -13,3 +13,13 @@ Every AI session used for this project, exported in full and unedited, one Markd
 The Claude Code sessions are converted from the local session logs by `scripts/export_chats.py` (all messages,
 thinking, tool calls and tool results; only the logger's internal bookkeeping records are left out). The script
 is re-run at the end, so the ongoing session is complete in the submitted version.
+
+## `program-output/`: what the program printed
+
+Terminal output (time, speaker, Armenian, English, latency) from test runs, one Markdown file per run, with the
+model and setup written at the top. These are not AI chats; they are kept here so the conversations above can be
+read next to what the program actually produced.
+
+| File | Run |
+|---|---|
+| `program-output/2026-10-23-live-test-1-turbo-hy.md` | YouTube conversation, call side only, old `turbo-hy` model: 30 phrases, latency p90 4.51 s |
