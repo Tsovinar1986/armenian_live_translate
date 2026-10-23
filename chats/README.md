@@ -4,7 +4,7 @@ Every AI session used for this project, exported in full and unedited, one Markd
 
 | File | When | Where | What |
 |---|---|---|---|
-| *(to add)* | 21 Oct | claude.ai | Plan, PLAN.md / DECISIONS.md / TESTS.md, walking skeleton (first commit) |
+| `claude-ai-2026-10-21-plan-and-skeleton.md` ([shared link](https://claude.ai/share/b1eac730-ad91-4f92-8f24-02865c9ad871)) | 21 Oct | claude.ai | Plan, PLAN.md / DECISIONS.md / TESTS.md, walking skeleton (first commit), BlackHole install |
 | *(to add)* | 22 Oct | claude.ai project chat | Coordinator conversations that started the two helper sessions below |
 | `claude-code-2026-10-21-2130-f5b8830e.md` | 21–23 Oct | Claude Code (VS Code) | Setup on the Mac, GitHub, BlackHole, FLEURS test set, ASR comparison, switch to NVIDIA FastConformer, speaker threshold |
 | `claude-code-2026-10-22-1840-a7d1c4cd.md` | 22 Oct | Claude Code, started from the project chat | Sync with GitHub, extend .gitignore |
