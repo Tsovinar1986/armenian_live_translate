@@ -1,2 +1,2 @@
 set,model,device,dtype,clips,cer,wer,lat_mean,lat_p90,lat_max,rtf,peak_rss_gb,load_s,date
-fleurs,turbo-hy,mps,float16,40,0.1310,0.4544,2.45,2.70,2.84,0.310,2.33,7,2026-10-23 15:45
+fleurs,turbo-hy,mps,float16,40,0.1256,0.4561,2.44,2.73,2.90,0.309,1.97,7,2026-10-23 16:05

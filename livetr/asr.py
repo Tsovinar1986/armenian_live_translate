@@ -64,7 +64,10 @@ class WhisperASR:
         kwargs = dict(
             num_beams=1,                 # greedy: beam search costs latency we don't have
             no_repeat_ngram_size=3,      # stops the classic Whisper repetition loop
-            max_new_tokens=160,          # 8 s of speech never needs more
+            # 4 prompt tokens + 224 text tokens. Armenian needs ~15 tokens/s, up to 21 on FLEURS; 160 truncated
+            # 4 of 40 clips mid-letter. 224 covers 8 s at 28 tokens/s. max_length, not max_new_tokens: the
+            # saved config also sets max_length, and having both prints a warning for every phrase.
+            max_length=228,
         )
         if self.language is not None:
             kwargs.update(language=self.language, task="transcribe")
