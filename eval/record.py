@@ -3,6 +3,7 @@
     python eval/record.py --speaker anna                 # reads eval/sentences.tsv
     python eval/record.py --speaker anna --mic 2
     python eval/record.py --speaker davit --free 6       # 6 free-speech clips (no reference) for speaker tests
+    python eval/record.py --speaker anna --ids s09 s15 s23  # only these sentences
 
 Output: eval/data/<speaker>/<id>.wav and lines in eval/data/manifest.tsv (path, speaker, reference).
 Audio stays local: eval/data/ is in .gitignore.
@@ -65,6 +66,7 @@ def main() -> None:
     p.add_argument("--speaker", required=True, help="short name of the person speaking, e.g. anna")
     p.add_argument("--mic", default=None, help="input device index or name (default: system default)")
     p.add_argument("--free", type=int, default=0, help="record N free-speech clips instead of the sentence list")
+    p.add_argument("--ids", nargs="+", default=None, help="record only these sentence ids, e.g. s09 s15")
     args = p.parse_args()
 
     devices = dev.query_devices()
@@ -78,6 +80,11 @@ def main() -> None:
     else:
         with open(ROOT / "eval" / "sentences.tsv", encoding="utf-8") as f:
             items = [(r["id"], r["hy"], r["hy"]) for r in csv.DictReader(f, delimiter="\t")]
+        if args.ids:
+            unknown = set(args.ids) - {i for i, _, _ in items}
+            if unknown:
+                raise SystemExit(f"unknown sentence ids: {sorted(unknown)}")
+            items = [it for it in items if it[0] in args.ids]
 
     manifest = DATA / "manifest.tsv"
     new_file = not manifest.exists()
