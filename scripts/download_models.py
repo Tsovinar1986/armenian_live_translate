@@ -1,8 +1,6 @@
 """Download every model once, so the program can run fully offline.
 
-    python scripts/download_models.py                 # default ASR + NLLB + speaker + VAD
-    python scripts/download_models.py --asr buzz mms  # extra ASR candidates for benchmarking
-    python scripts/download_models.py --asr all
+    python scripts/download_models.py                 # ASR + NLLB + speaker + VAD
 """
 from __future__ import annotations
 
@@ -31,9 +29,7 @@ def main() -> None:
     for key in keys:
         spec = MODELS[key]
         print(f"[asr] {key}: {spec.repo}")
-        # MMS ships ~1,100 language adapters; fetch only the shared weights and the Armenian one.
-        allow = None if spec.kind != "mms" else ["*.json", "*.txt", "model*.safetensors", f"adapter.{spec.language}.*"]
-        snapshot_download(spec.repo, allow_patterns=allow)
+        snapshot_download(spec.repo, allow_patterns=["*.nemo"])  # the same file NemoASR loads
 
     out = Path(args.nllb_dir)
     if (out / "model.bin").exists():

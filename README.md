@@ -36,7 +36,6 @@ pip install -r requirements.txt
 ### 1.2 Download the models (once, needs internet)
 ```bash
 python scripts/download_models.py                 # default ASR + translation + speaker + VAD
-python scripts/download_models.py --asr all       # also the other ASR candidates, for benchmarking
 ```
 After this the program runs **offline**: it sets `HF_HUB_OFFLINE=1` at start, so a missing model is an error,
 never a silent download. (`--allow-download` turns that off.)
