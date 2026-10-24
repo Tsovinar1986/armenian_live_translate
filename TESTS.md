@@ -46,7 +46,9 @@ Automated tests: `pytest` (pure logic only, no models or audio devices needed).
 - [x] `--stats` summary at exit: p50/p90/max latency per source under 5 s.
   Call side, NVIDIA model, live through BlackHole: p50 1.30 / p90 1.55 / max 1.59 s.
   Call side, live test 1: p50 4.16 / p90 4.51 / max 4.69 s, 0 over 5 s (margin only ~0.3 s). Mic side: not yet.
-- [x] Long monologue (> 15 s) is force-cut and each part arrives in time. (automated + test call; cuts can split words)
+- [x] Long monologue (> 15 s) is force-cut and each part arrives in time. (automated + test call)
+- [x] Forced cut goes into a gap between words when there is one in the last 1 s (automated: `test_segmenter.py`;
+  test call at 8 s limit: CER 5.7 % -> 5.1 %).
 - [ ] Both sides talking at once: queue wait visible, latency still acceptable?
 - [ ] First segment after start is not slow (warm-up done at startup).
 - [ ] Memory: Activity Monitor shows no swap during a 10-minute call.

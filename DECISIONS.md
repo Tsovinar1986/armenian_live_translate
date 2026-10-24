@@ -213,3 +213,19 @@ Whole program with 1.3B, test call, 15 s phrase limit, on battery: latency p50 3
 Chosen: 1.3B, because translation was the weakest stage (tip 2: improve the weakest link). Trade-off: the latency
 margin shrinks from ~2 s to ~1 s. If the practice call (with a call app using CPU) goes over 5 s, the default goes
 back to 600M. Conversion needs `load_as_float16=True, low_cpu_mem_usage=True` to fit in 8 GB RAM.
+
+## 2026-10-24 — Forced cut at the quietest moment of the last second
+A phrase longer than the limit used to be cut exactly at the limit, often inside a word. Now the segmenter looks at
+the last 1 s (`cut_search_ms=1000`) and cuts after the quietest 32 ms frame (lowest RMS), if it is a clear dip
+(below half the window's median RMS); without a clear dip it still cuts at the limit. The rest of the audio starts
+the next segment, so nothing is lost or doubled (unit tests). Test call (`--file`, 9 turns), one run each:
+| limit | cut | forced cuts | CER / WER | speaker turns |
+|---|---|---|---|---|
+| 8 s | at the limit (old) | 11 | 5.7 % / 13.0 % | 9/9 |
+| 8 s | quietest moment | 11 | 5.1 % / 11.8 % | 9/9 |
+| 15 s | at the limit (old) | 3 | 4.1 % / 10.2 % | 9/9 |
+| 15 s | quietest moment | 3 | 4.0 % / 9.8 % | 9/9 |
+Cost: a cut line now ends up to 1 s before the moment the cut is made, and its latency is measured from that
+earlier point (honest: the line holds audio only up to there), so cut lines show up to +1 s in `wait`.
+Latency of these four runs is not comparable: the Mac had 7 GB swap in use and translation took 2-4 s instead of
+1-2 s (a 4.4 GB Ollama `llama-server` from another project started during the runs). Re-measure on a quiet Mac.

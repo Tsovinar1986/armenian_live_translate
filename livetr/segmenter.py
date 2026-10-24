@@ -28,6 +28,7 @@ class Segmenter:
         speech_pad_ms: int = 160,       # audio kept before speech start and after speech end
         min_speech_ms: int = 400,       # shorter utterances are dropped (clicks, coughs)
         max_segment_s: float = 15.0,    # force a cut so ASR time stays bounded (see DECISIONS.md)
+        cut_search_ms: int = 1000,      # a forced cut goes at the quietest frame of this last stretch
     ):
         self.source = source
         self.vad = vad
@@ -39,6 +40,7 @@ class Segmenter:
         self.pad_frames = round(speech_pad_ms / 1000 / self.frame_s)
         self.min_speech_frames = round(min_speech_ms / 1000 / self.frame_s)
         self.max_frames = round(max_segment_s / self.frame_s)
+        self.cut_search_frames = max(1, min(round(cut_search_ms / 1000 / self.frame_s), self.max_frames - 1))
 
         self.dropped_short = 0  # counter, reported in --stats
         self._buf = np.zeros(0, dtype=np.float32)
@@ -48,6 +50,7 @@ class Segmenter:
     def _reset_segment(self) -> None:
         self._in_speech = False
         self._frames: list[np.ndarray] = []
+        self._probs: list[float] = []
         self._start_wall = 0.0
         self._speech_frames = 0
         self._silence_run = 0
@@ -85,6 +88,7 @@ class Segmenter:
             if prob >= self.threshold:
                 self._in_speech = True
                 self._frames = list(self._pre) + [frame]
+                self._probs = [0.0] * len(self._pre) + [prob]
                 self._start_wall = frame_end - len(self._frames) * self.frame_s
                 self._speech_frames = 1
                 self._silence_run = 0
@@ -96,6 +100,7 @@ class Segmenter:
             return None
 
         self._frames.append(frame)
+        self._probs.append(prob)
         if prob >= self.neg_threshold:
             self._speech_frames += 1
             self._silence_run = 0
@@ -110,14 +115,36 @@ class Segmenter:
             self._pre.extend(trailing)  # silence after the cut can pre-roll the next utterance
             return seg
         if len(self._frames) >= self.max_frames:
-            # Cut at the current frame: the phrase is not over, but waiting longer breaks the latency budget.
-            self._last_speech_idx = len(self._frames) - 1
-            self._last_speech_end = frame_end
-            seg = self._emit(forced=True)
-            self._in_speech = True  # speech continues into the next segment
-            self._start_wall = frame_end
-            return seg
+            return self._forced_cut(frame_end)
         return None
+
+    def _forced_cut(self, frame_end: float) -> Segment | None:
+        """The phrase is not over, but waiting longer breaks the latency budget. Cut after the quietest frame
+        of the last `cut_search_ms` (lowest RMS: usually a gap between words) instead of at the current frame,
+        so words are not split. Only a clear dip counts (below half the window's median); without one, cut here.
+        The frames after the cut start the next segment."""
+        window = self._frames[-self.cut_search_frames:]
+        rms = np.array([float(np.sqrt(np.mean(f ** 2))) for f in window])
+        quietest = len(rms) - 1 - int(np.argmin(rms[::-1]))  # latest frame on ties
+        if rms[quietest] >= 0.5 * float(np.median(rms)):
+            quietest = len(rms) - 1
+        cut = len(self._frames) - len(window) + quietest  # last frame of the emitted segment
+        rest, rest_probs = self._frames[cut + 1:], self._probs[cut + 1:]
+        cut_wall = frame_end - len(rest) * self.frame_s
+
+        self._frames, self._probs = self._frames[:cut + 1], self._probs[:cut + 1]
+        self._speech_frames = sum(p >= self.neg_threshold for p in self._probs)
+        self._last_speech_idx = cut
+        self._last_speech_end = cut_wall
+        seg = self._emit(forced=True)
+
+        self._in_speech = True  # speech continues into the next segment
+        self._frames, self._probs = rest, rest_probs
+        self._start_wall = cut_wall
+        self._speech_frames = sum(p >= self.neg_threshold for p in rest_probs)
+        self._last_speech_idx = len(rest) - 1
+        self._last_speech_end = frame_end
+        return seg
 
     def _emit(self, forced: bool) -> Segment | None:
         end_idx = self._last_speech_idx + 1 + (0 if forced else self.pad_frames)

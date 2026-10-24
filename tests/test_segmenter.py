@@ -49,6 +49,26 @@ def test_long_speech_is_force_cut():
     assert sum(s.duration for s in segs) == pytest.approx(20.0, abs=0.5)
 
 
+def test_forced_cut_goes_into_the_gap_between_words():
+    # 7.5 s of speech, a 0.1 s gap (too short to end the phrase), 3 s more: the 8 s limit falls 0.4 s after the gap.
+    audio = np.concatenate([tone(7.5), silence(0.1), tone(3.0), silence(1.0)])
+    segs = feed(Segmenter("system", energy_vad, max_segment_s=8.0, speech_pad_ms=0), audio)
+    assert [s.forced_cut for s in segs] == [True, False]
+    first_end = segs[0].duration
+    assert 7.5 <= first_end <= 7.6 + 0.04  # cut inside the gap, not at 8 s
+    assert segs[0].end_wall == pytest.approx(100.0 + first_end, abs=0.04)
+    assert segs[1].start_wall == pytest.approx(segs[0].end_wall, abs=1e-6)
+    assert sum(s.duration for s in segs) == pytest.approx(10.6, abs=0.1)  # no audio lost or doubled
+
+
+def test_forced_cut_ignores_gaps_outside_the_search_window():
+    # gap 3 s before the limit: outside the 1 s window, so the cut stays at the limit
+    audio = np.concatenate([tone(5.0), silence(0.1), tone(6.0), silence(1.0)])
+    segs = feed(Segmenter("system", energy_vad, max_segment_s=8.0, speech_pad_ms=0), audio)
+    assert segs[0].forced_cut
+    assert segs[0].duration == pytest.approx(8.0, abs=0.05)
+
+
 @pytest.mark.parametrize("block", [160, 512, 1000, 4800])
 def test_block_size_does_not_change_result(block):
     audio = np.concatenate([silence(0.7), tone(1.5), silence(0.9), tone(1.2), silence(1.0)])
