@@ -17,6 +17,8 @@ Automated tests: `pytest` (pure logic only, no models or audio devices needed).
 - [x] Fast speech in a full 8 s phrase is not truncated by the decoder length limit (FLEURS: 0 clips hit the
   cap after raising it to 224 text tokens; 4 of 40 were cut at 160).
 - [ ] Silence and background noise do not produce invented text (5 min idle test: count printed lines).
+  Synthetic (`eval/make_noise.py`: room tone, fan, typing, thumps, breaths, 60 s each): 0 lines in 5 min, the
+  VAD never fired (2026-10-24). Still to do: 5 min real idle room through the mic (`python -m livetr --no-system`).
 - [ ] Numbers, names (Երևան, Գյումրի) and questions (՞) come out readable.
 - [x] CER/WER metric is correct on known examples. (automated: `test_metrics.py`)
 
@@ -50,6 +52,8 @@ Automated tests: `pytest` (pure logic only, no models or audio devices needed).
 - [x] Forced cut goes into a gap between words when there is one in the last 1 s (automated: `test_segmenter.py`;
   test call at 8 s limit: CER 5.7 % -> 5.1 %).
 - [ ] Both sides talking at once: queue wait visible, latency still acceptable?
+  Test: `python -m livetr --file eval/data/test_call.wav --mic-file eval/data/overlap_mic.wav` (mic = Opus copy
+  of the call, 3 s later, so both sides overlap almost all the time).
 - [ ] First segment after start is not slow (warm-up done at startup).
 - [ ] Memory: Activity Monitor shows no swap during a 10-minute call.
 

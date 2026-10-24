@@ -27,6 +27,8 @@ def build_parser() -> argparse.ArgumentParser:
     g.add_argument("--no-system", action="store_true", help="do not capture system audio")
     g.add_argument("--file", default=None, help="play a 16-bit WAV file in real time instead of live devices")
     g.add_argument("--file-source", choices=["mic", "system"], default="system", help="treat --file as this source")
+    g.add_argument("--mic-file", default=None,
+                   help="also play this WAV as the mic, at the same time as --file (test: both sides talking at once)")
 
     m = p.add_argument_group("models")
     m.add_argument("--asr", choices=sorted(MODELS), default=DEFAULT_ASR, help=f"ASR model (default {DEFAULT_ASR})")
@@ -99,6 +101,12 @@ def main(argv: list[str] | None = None) -> None:
         from livetr.audio.capture import FileSource
 
         sources.append(FileSource(MIC if args.file_source == "mic" else SYSTEM, args.file))
+        if args.mic_file:
+            if args.file_source == "mic":
+                sys.exit("error: --mic-file needs --file to be the system side (--file-source system).")
+            sources.append(FileSource(MIC, args.mic_file))
+    elif args.mic_file:
+        sys.exit("error: --mic-file is played together with --file; pass --file too.")
     else:
         from livetr.audio.capture import DeviceSource
 

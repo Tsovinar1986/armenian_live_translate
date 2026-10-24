@@ -15,6 +15,9 @@ Limit: no two *very* similar voices, because FLEURS does not have them.
 
 Writes eval/data/test_call.wav, test_call_opus16k.wav (through the 16 kbps Opus codec that calls use, needs
 ffmpeg) and test_call.tsv (start, end, speaker, reference text).
+
+Long session (10+ minutes, many speaker switches): `--turns 12 --name test_call_long` gives each speaker 12 turns
+in a random order (fixed seed) with no speaker twice in a row.
 """
 from __future__ import annotations
 
@@ -32,7 +35,24 @@ from common import DATA, ROOT
 
 GAP_S = 1.2
 ORDER = ["F1", "M1", "F2", "M1", "F1", "F2", "M1", "F2", "F1"]   # every speaker comes back after others
-TURNS = 3
+
+
+def turn_order(turns: int, seed: int = 0) -> list[str]:
+    """The fixed 9-turn order for 3 turns each; otherwise random, each speaker `turns` times, never twice in a row."""
+    if turns == 3:
+        return ORDER
+    rng = np.random.default_rng(seed)
+    left = {"F1": turns, "F2": turns, "M1": turns}
+    order: list[str] = []
+    while any(left.values()):
+        options = [s for s, n in left.items() if n and (not order or s != order[-1])]
+        if not options:
+            raise SystemExit(f"cannot place the last turns without a repeat: {order}")
+        top = max(left[s] for s in options)  # prefer the speaker with most turns left, so none is stranded at the end
+        spk = str(rng.choice([s for s in options if left[s] == top]))
+        order.append(spk)
+        left[spk] -= 1
+    return order
 
 
 def save(path: Path, audio: np.ndarray) -> None:
@@ -47,7 +67,10 @@ def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--min-sim", type=float, default=0.7)
     p.add_argument("--max-cross", type=float, default=0.35)
+    p.add_argument("--turns", type=int, default=3, help="turns per speaker")
+    p.add_argument("--name", default="test_call", help="output file prefix in eval/data/")
     args = p.parse_args()
+    TURNS = args.turns
 
     import soundfile as sf
     from huggingface_hub import hf_hub_download
@@ -112,7 +135,7 @@ def main() -> None:
 
     turn_of = {k: 0 for k in speakers}
     parts, rows, t = [np.zeros(int(GAP_S * 16000), np.float32)], [], GAP_S
-    for spk in ORDER:
+    for spk in turn_order(TURNS):
         name = names[speakers[spk][turn_of[spk]]]
         turn_of[spk] += 1
         a = audio[name]
@@ -122,19 +145,19 @@ def main() -> None:
     call = np.concatenate(parts)
     call *= 0.5 / max(np.abs(call).max(), 1e-6)  # same level for both versions
 
-    out = DATA / "test_call.wav"
+    out = DATA / f"{args.name}.wav"
     save(out, call)
-    with open(DATA / "test_call.tsv", "w", encoding="utf-8", newline="") as f:
+    with open(DATA / f"{args.name}.tsv", "w", encoding="utf-8", newline="") as f:
         w = csv.writer(f, delimiter="\t")
         w.writerow(["start", "end", "speaker", "reference"])
         w.writerows(rows)
-    opus = DATA / "test_call_opus16k.wav"
+    opus = DATA / f"{args.name}_opus16k.wav"
     subprocess.run(f"ffmpeg -y -loglevel error -i {out} -c:a libopus -b:a 16k -f ogg - | "
                    f"ffmpeg -y -loglevel error -i - -ar 16000 -ac 1 -c:a pcm_s16le {opus}", shell=True, check=True)
     print(f"{len(call) / 16000:.0f} s, {len(rows)} turns, lowest similarity within a reader "
           + ", ".join(f"{k} {v:.2f}" for k, v in same.items()))
     print(f"largest similarity between two different chosen readers: {cross:.2f}")
-    print(f"wrote {out}, {opus}, {DATA / 'test_call.tsv'}")
+    print(f"wrote {out}, {opus}, {DATA / (args.name + '.tsv')}")
 
 
 if __name__ == "__main__":

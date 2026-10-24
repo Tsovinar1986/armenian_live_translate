@@ -1,6 +1,6 @@
 """Score the program's output on the test call: speaker labels, transcription errors, latency.
 
-    python eval/score_call.py eval/data/test_call_out.txt [--offset 0]
+    python eval/score_call.py eval/data/test_call_out.txt [--offset 0] [--tsv eval/data/test_call.tsv]
 
 Each printed phrase is matched to the true turn that contains its start time ([hh:mm:ss] in the header, ±1 s).
 Speaker labels are scored per turn: a turn is right if its label is the label its speaker got on its first
@@ -27,9 +27,10 @@ def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("output")
     p.add_argument("--offset", type=float, default=0.0)
+    p.add_argument("--tsv", default=str(DATA / "test_call.tsv"), help="true turns of the call that was played")
     args = p.parse_args()
 
-    with open(DATA / "test_call.tsv", encoding="utf-8") as f:
+    with open(args.tsv, encoding="utf-8") as f:
         turns = [dict(r, start=float(r["start"]), end=float(r["end"])) for r in csv.DictReader(f, delimiter="\t")]
     phrases, cur = [], None
     for line in open(args.output, encoding="utf-8"):

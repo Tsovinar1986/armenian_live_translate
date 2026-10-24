@@ -229,3 +229,14 @@ Cost: a cut line now ends up to 1 s before the moment the cut is made, and its l
 earlier point (honest: the line holds audio only up to there), so cut lines show up to +1 s in `wait`.
 Latency of these four runs is not comparable: the Mac had 7 GB swap in use and translation took 2-4 s instead of
 1-2 s (a 4.4 GB Ollama `llama-server` from another project started during the runs). Re-measure on a quiet Mac.
+
+## 2026-10-24 — Test tools for the pre-meeting checks
+- `--mic-file`: plays a second WAV as the mic side together with `--file`, to test both sides talking at once
+  without a call. Test input only; live use is unchanged.
+- `eval/make_noise.py`: 5 min of synthetic non-speech (room tone, fan, typing, thumps, breaths). Result: 0 lines,
+  the VAD never fired. A real idle room through the mic is still needed.
+- `eval/make_test_call.py --turns N --name X`: longer test call (e.g. 12 turns per speaker, ~10 min, no speaker twice
+  in a row) for label stability and memory over a long session. `eval/score_call.py --tsv` scores it.
+- `eval/run_numbers.py`: FLEURS sentences with digits and with ՞, checks numbers and question marks in HY and EN.
+Timing results need a quiet Mac: during these runs a second local LLM (Ollama, another project, 4+ GB) relaunched
+itself, the Mac swapped and one translation took 210 s. Before the meeting: Ollama must be quit.
