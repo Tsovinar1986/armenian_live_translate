@@ -14,6 +14,7 @@ class NllbTranslator:
         tgt_lang: str = "eng_Latn",
         threads: int = 4,
         beam_size: int = 2,
+        no_repeat_ngram_size: int = 4,  # blocks repeated 4-grams: stops "no, no, no, …" loops (DECISIONS.md)
     ):
         if not (Path(model_dir) / "model.bin").exists():
             raise FileNotFoundError(
@@ -24,6 +25,7 @@ class NllbTranslator:
 
         self.tgt_lang = tgt_lang
         self.beam_size = beam_size
+        self.no_repeat_ngram_size = no_repeat_ngram_size
         self.tokenizer = AutoTokenizer.from_pretrained(model_dir, src_lang=src_lang)
         self.translator = ctranslate2.Translator(
             model_dir, device="cpu", compute_type="int8", intra_threads=threads
@@ -36,6 +38,7 @@ class NllbTranslator:
             target_prefix=[[self.tgt_lang]],
             beam_size=self.beam_size,
             max_decoding_length=256,
+            no_repeat_ngram_size=self.no_repeat_ngram_size,
         )
         out_tokens = result[0].hypotheses[0][1:]  # drop the target-language token
         return self.tokenizer.decode(

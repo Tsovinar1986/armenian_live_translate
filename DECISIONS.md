@@ -263,3 +263,26 @@ Real idle room through the mic (MINISO headset, 13.5 min, nobody speaking): one 
 the ASR wrote a single letter «Ժ։», and NLLB invented "What are you doing?" from it. A single letter is never a
 phrase, so `Processor` now treats fewer than 2 letters (punctuation ignored) like an empty result: no translation,
 nothing printed, counted in the stats. Two-letter answers such as «Հա» still pass.
+
+## 2026-10-24 — Translation: block repeated 4-grams (stops NLLB loops)
+In the YouTube debate (spontaneous speech, current ASR) NLLB looped twice: "you can, you can, you can, …" and one line
+of 130 words "no, no, no, …" until the 256-token cap (that line took 7.9 s to translate). CTranslate2
+`no_repeat_ngram_size`, NLLB 600M:
+| setting | FLEURS chrF (150) | MT mean / max | debate lines that loop (38) | longest line |
+|---|---|---|---|---|
+| off | 60.1 | 1.00 / 2.59 s | 2 | 130 words |
+| 3 | 60.0 | 1.05 / 2.63 s | 0 | - |
+| **4** | **60.2** | 1.01 / 2.51 s | **0** | 30 words |
+| 5 | 60.1 | 1.01 / 2.58 s | 1 | 29 words |
+Chosen: 4. Side effect: a word cannot appear twice in the same 4-token context ("a suspicious burden, a suspicion
+situation"); with 3 it was worse ("suspicuous"). `eval/run_mt_fleurs.py --no-repeat-ngram N` reproduces the table.
+
+## 2026-10-24 — Spontaneous speech and similar voices, from the YouTube debate (`eval/data/live_yt2.txt`)
+Parliament hearing, fast spontaneous speech, current ASR (FastConformer), 38 lines (old 8 s cut).
+- ASR keeps colloquial forms (`էս`, `ա`, `սենց`, `էլի`, `իրա`); loanwords are misheard (front office ->
+  `Ֆրոնտովսում`, `ֆրոնտոֆիս`; `Մաշնային` for `մաքսային`). English gives the gist in about half the lines; the
+  rest is partly or fully wrong. ASR latency stays 0.2 s, so speed is not the issue, accuracy is.
+- Speakers: 37 lines `Speaker 1`, 1 line `Speaker 2`, although the text shows at least two men (the chair asking
+  people to speak in turn, and the official answering). Likely two similar male voices merged at threshold 0.45.
+  Not provable without the audio (not saved). FLEURS two women (max similarity 0.29) are kept apart (36/36).
+  Similar voices stay a known weak point; a live check with two same-gender people is still needed.

@@ -1,3 +1,6 @@
 model,sentences,chrf,lat_mean,lat_p90,lat_max,date
 nllb-200-distilled-600M-ct2-int8,150,60.1,1.00,1.43,2.59,2026-10-23 23:41
 nllb-200-distilled-1.3B-ct2-int8,150,63.5,1.81,2.53,4.68,2026-10-23 23:45
+nllb-200-distilled-600M-ct2-int8-norepeat3,150,60.0,1.05,1.55,2.63,2026-10-24 21:53
+nllb-200-distilled-600M-ct2-int8-norepeat4,150,60.2,1.01,1.45,2.51,2026-10-24 21:55
+nllb-200-distilled-600M-ct2-int8-norepeat5,150,60.1,1.01,1.51,2.58,2026-10-24 21:58

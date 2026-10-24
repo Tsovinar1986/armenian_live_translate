@@ -26,6 +26,8 @@ Automated tests: `pytest` (pure logic only, no models or audio devices needed).
   right); English has the exact number in 12/30, years go wrong most (1889 -> 1899, 1940 -> "a hundred and forty").
   Only 2 FLEURS questions <= 15 s: ՞ lost in both. Names and questions: own recordings needed (s01 s05 s08 s09 s12 s15).
 - [x] CER/WER metric is correct on known examples. (automated: `test_metrics.py`)
+- [x] Spontaneous fast speech with the current model: YouTube debate, 38 lines. Colloquial forms right, loanwords
+  misheard, English gist in about half the lines. NLLB loops fixed with `no_repeat_ngram_size=4` (2026-10-24).
 
 ## R3 — English translation
 - [x] Armenian quotes `«»` (unknown to NLLB): replacing them with `"` gives no gain (chrF 60.8 = 60.8 on 33 FLEURS sentences).
@@ -42,6 +44,8 @@ Automated tests: `pytest` (pure logic only, no models or audio devices needed).
 - [ ] `eval/run_speakers.py` similarity distributions: same-speaker vs different-speaker separate cleanly?
   FLEURS pairs (`eval/fleurs_speakers.py`): yes, valley at 0.4–0.5 for full clips and 3 s crops; threshold 0.45.
 - [ ] Two call participants of the same gender / similar voice: are they kept apart? (known hard case)
+  FLEURS two women: yes (36/36). YouTube debate: at least two men, 37 of 38 lines `Speaker 1` -> likely merged.
+  Live check with two same-gender people still needed.
 - [x] Video/call with 10+ speaker switches: every returning speaker gets its old label back.
   `test_call_long` (FLEURS, 3 voices, 35 switches): 36/36 turns, 3 speakers found, 0 `Speaker ?` (2026-10-24).
   Test call: 8 switches, all returning speakers got their old label back.

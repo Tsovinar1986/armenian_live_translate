@@ -42,12 +42,13 @@ def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--nllb-dir", required=True)
     p.add_argument("--n", type=int, default=150)
+    p.add_argument("--no-repeat-ngram", type=int, default=0, help="NllbTranslator no_repeat_ngram_size (0 = off)")
     args = p.parse_args()
     from sacrebleu.metrics import CHRF
 
-    model = Path(args.nllb_dir).name
+    model = Path(args.nllb_dir).name + (f"-norepeat{args.no_repeat_ngram}" if args.no_repeat_ngram else "")
     pairs = fleurs_pairs(args.n)
-    tr = NllbTranslator(args.nllb_dir)
+    tr = NllbTranslator(args.nllb_dir, no_repeat_ngram_size=args.no_repeat_ngram)
     tr.translate("Բարև")  # warm-up
     hyps, lats = [], []
     for hy, _ in pairs:
