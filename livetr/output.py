@@ -78,7 +78,7 @@ class Stats:
         for k, vals in sorted(self.stage_times.items()):
             lines.append(f"stage {k:<5} mean {np.mean(vals):.2f}s  max {np.max(vals):.2f}s")
         lines.append(
-            f"dropped short segments: {self.dropped_short}   empty ASR results: {self.empty_asr}   "
+            f"dropped short segments: {self.dropped_short}   empty or 1-letter ASR results: {self.empty_asr}   "
             f"audio overflows: {self.overflows}"
         )
         return "\n".join(lines)

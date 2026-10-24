@@ -9,6 +9,7 @@ Any exception in a thread stops the whole program with the traceback (fail loudl
 from __future__ import annotations
 
 import queue
+import re
 import sys
 import threading
 import time
@@ -21,6 +22,13 @@ from livetr.audio.capture import Converter
 from livetr.output import Printer, Stats
 from livetr.segmenter import Segmenter
 from livetr.types import Result, Segment
+
+
+MIN_LETTERS = 2  # fewer letters is noise, not a phrase: idle mic gave «Ժ։» -> "What are you doing?" (DECISIONS.md)
+
+
+def is_phrase(text: str) -> bool:
+    return len(re.sub(r"[\W_]", "", text)) >= MIN_LETTERS
 
 
 class Asr(Protocol):
@@ -55,7 +63,7 @@ class Processor:
         hy = self.asr.transcribe(segment.audio).strip()
         t2 = self.clock()
         timings["asr"] = t2 - t
-        if not hy:
+        if not is_phrase(hy):
             self.stats.empty_asr += 1
             return None
 

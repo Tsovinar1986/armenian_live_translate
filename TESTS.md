@@ -18,7 +18,9 @@ Automated tests: `pytest` (pure logic only, no models or audio devices needed).
   cap after raising it to 224 text tokens; 4 of 40 were cut at 160).
 - [ ] Silence and background noise do not produce invented text (5 min idle test: count printed lines).
   Synthetic (`eval/make_noise.py`: room tone, fan, typing, thumps, breaths, 60 s each): 0 lines in 5 min, the
-  VAD never fired (2026-10-24). Still to do: 5 min real idle room through the mic (`python -m livetr --no-system`).
+  VAD never fired (2026-10-24).
+  Real idle room, MINISO mic, 13.5 min: 1 line, ASR «Ժ։» -> EN "What are you doing?". Fixed: results with fewer than
+  2 letters are dropped like empty ones (automated: `test_pipeline.py`) -> 0 lines expected.
 - [ ] Numbers, names (Երևան, Գյումրի) and questions (՞) come out readable.
   FLEURS (`eval/run_numbers.py`, 30 sentences with digits): ASR always writes numbers as words (readable, mostly
   right); English has the exact number in 12/30, years go wrong most (1889 -> 1899, 1940 -> "a hundred and forty").

@@ -257,3 +257,9 @@ stays available with `--nllb-dir models/nllb-200-distilled-1.3B-ct2-int8` for ca
 Start-up: 15 s from command to listening; first phrase 2.6 s (warm-up works).
 Numbers (`eval/run_numbers.py`, FLEURS): ASR writes numbers as Armenian words; English has the exact number in 12/30
 sentences, years are the weak spot. Not fixed (would need Armenian number-word parsing; not in the time budget).
+
+## 2026-10-24 — Drop ASR results with fewer than 2 letters
+Real idle room through the mic (MINISO headset, 13.5 min, nobody speaking): one line printed. The VAD passed a noise,
+the ASR wrote a single letter «Ժ։», and NLLB invented "What are you doing?" from it. A single letter is never a
+phrase, so `Processor` now treats fewer than 2 letters (punctuation ignored) like an empty result: no translation,
+nothing printed, counted in the stats. Two-letter answers such as «Հա» still pass.
