@@ -46,6 +46,11 @@ Automated tests: `pytest` (pure logic only, no models or audio devices needed).
 - [ ] Two call participants of the same gender / similar voice: are they kept apart? (known hard case)
   FLEURS two women: yes (36/36). YouTube debate: at least two men, 37 of 38 lines `Speaker 1` -> likely merged.
   Live check with two same-gender people still needed.
+  In progress (2026-10-25): YouTube podcast, two men (Rearrange #310, host Narek Amirkhanyan, guest Hayk Margaryan,
+  video 05:00-15:00, `--file`). First 6.5 min at threshold 0.45: 42 lines, 39 `Speaker 1`, 3 `Speaker 2` = an ad
+  read by another voice at 07:11-07:39; after the ad the guest got `Speaker 1` back. Latency 0.9-3.7 s.
+  Open: does the host speak in this stretch, and is he kept apart? To be checked against the video by ear;
+  runs at threshold 0.55 and 0.65 follow.
 - [x] Video/call with 10+ speaker switches: every returning speaker gets its old label back.
   `test_call_long` (FLEURS, 3 voices, 35 switches): 36/36 turns, 3 speakers found, 0 `Speaker ?` (2026-10-24).
   Test call: 8 switches, all returning speakers got their old label back.
