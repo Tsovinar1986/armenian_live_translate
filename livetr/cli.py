@@ -34,8 +34,8 @@ def build_parser() -> argparse.ArgumentParser:
     m.add_argument("--asr", choices=sorted(MODELS), default=DEFAULT_ASR, help=f"ASR model (default {DEFAULT_ASR})")
     m.add_argument("--device", choices=["auto", "mps", "cpu"], default="cpu",
                    help="device for ASR (default cpu: measured fastest for this small model)")
-    m.add_argument("--nllb-dir", default="models/nllb-200-distilled-1.3B-ct2-int8",
-                   help="translation model (fallback if too slow: models/nllb-200-distilled-600M-ct2-int8)")
+    m.add_argument("--nllb-dir", default="models/nllb-200-distilled-600M-ct2-int8",
+                   help="translation model (better but slower: models/nllb-200-distilled-1.3B-ct2-int8)")
     m.add_argument("--allow-download", action="store_true",
                    help="allow Hugging Face downloads at runtime (default: offline, models must be downloaded first)")
 

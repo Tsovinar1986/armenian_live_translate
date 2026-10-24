@@ -240,3 +240,20 @@ Latency of these four runs is not comparable: the Mac had 7 GB swap in use and t
 - `eval/run_numbers.py`: FLEURS sentences with digits and with ՞, checks numbers and question marks in HY and EN.
 Timing results need a quiet Mac: during these runs a second local LLM (Ollama, another project, 4+ GB) relaunched
 itself, the Mac swapped and one translation took 210 s. Before the meeting: Ollama must be quit.
+
+## 2026-10-24 — Translation back to NLLB 600M (1.3B fails when both sides talk)
+The 1.3B decision said: back to 600M if a test goes over 5 s. Stress tests on a quiet Mac (Ollama stopped), `--file`:
+| test | NLLB 1.3B | NLLB 600M |
+|---|---|---|
+| both sides at once, 2.5 min (`--mic-file`), over 5 s | 4 of 23, max 6.6 s | 0 of 23, max 3.5 s |
+| queue wait max | 5.4 s | 1.9 s |
+| 10.5 min call, 36 turns: latency p50 / max | 3.4 / 4.8 s | 2.2 / 3.5 s |
+| translation per line mean / max | 2.1–2.2 / 4.3 s | 1.2 / 2.3 s |
+| peak memory (RSS) | 2.7 GB | 2.1 GB |
+| swap growth over the runs | ~1.3 GB | ~0.2 GB |
+| speaker turns (long call) | 36/36 | 36/36 |
+Chosen: 600M as default. Trade-off: chrF 60.1 instead of 63.5 and worse on colloquial phrases (`ինչ կա, չկա`). 1.3B
+stays available with `--nllb-dir models/nllb-200-distilled-1.3B-ct2-int8` for calls where one side mostly listens.
+Start-up: 15 s from command to listening; first phrase 2.6 s (warm-up works).
+Numbers (`eval/run_numbers.py`, FLEURS): ASR writes numbers as Armenian words; English has the exact number in 12/30
+sentences, years are the weak spot. Not fixed (would need Armenian number-word parsing; not in the time budget).

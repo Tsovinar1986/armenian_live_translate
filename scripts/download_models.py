@@ -15,14 +15,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from livetr.asr import MODELS  # noqa: E402
 from livetr.cli import DEFAULT_ASR  # noqa: E402
 
-NLLB_REPO = "facebook/nllb-200-distilled-1.3B"  # 600M is the fallback: --nllb-repo/--nllb-dir
+NLLB_REPO = "facebook/nllb-200-distilled-600M"  # 1.3B: --nllb-repo facebook/nllb-200-distilled-1.3B --nllb-dir ...
 
 
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--asr", nargs="+", default=[DEFAULT_ASR], help=f"keys from {list(MODELS)} or 'all'")
     p.add_argument("--nllb-repo", default=NLLB_REPO)
-    p.add_argument("--nllb-dir", default="models/nllb-200-distilled-1.3B-ct2-int8")
+    p.add_argument("--nllb-dir", default="models/nllb-200-distilled-600M-ct2-int8")
     args = p.parse_args()
     keys = list(MODELS) if args.asr == ["all"] else args.asr
 

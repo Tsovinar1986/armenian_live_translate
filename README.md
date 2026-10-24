@@ -80,7 +80,7 @@ default 15), `--speaker-threshold` (default 0.45), `--vad-threshold` (default 0.
  mic ──► DeviceSource ─┐                                      ┌─► ASR (NVIDIA FastConformer hy, CPU)
                        ├─► Converter ─► Segmenter (Silero VAD) ├─► Speaker: mic → "Me" / system → ECAPA + online clustering
  BlackHole ► DeviceSource┘   48k→16k mono    per source   queue ─┤    (one worker thread)
-                                                              └─► Translation (NLLB-1.3B, CTranslate2 int8, CPU) ─► terminal
+                                                              └─► Translation (NLLB-600M, CTranslate2 int8, CPU) ─► terminal
 ```
 
 | Module | Role | In → out |
@@ -137,18 +137,19 @@ Honest caveats:
 - Rejected without benchmarking: small/tiny Armenian Whisper fine-tunes (published WER 40–78 %); cloud ASR
   (not allowed).
 
-### Translation: NLLB-200 distilled 1.3B, CTranslate2 int8, on CPU
-Supports `hye_Armn → eng_Latn`, 1.4 GB in int8. Compared with the 600M version on 150 FLEURS sentences against the
+### Translation: NLLB-200 distilled 600M, CTranslate2 int8, on CPU
+Supports `hye_Armn → eng_Latn`, 0.6 GB in int8. Compared with the 600M version on 150 FLEURS sentences against the
 official English translations (`eval/run_mt_fleurs.py`):
 
 | model | chrF | time per sentence mean / max | colloquial `ինչպես ես ինչ կա, չկա` |
 |---|---|---|---|
-| **NLLB 1.3B** | **63.5** | 1.81 / 4.68 s | "Hi, how are you?" |
-| NLLB 600M | 60.1 | 1.00 / 2.59 s | "Hello, as I am, there is no such thing." |
+| NLLB 1.3B | **63.5** | 1.81 / 4.68 s | "Hi, how are you?" |
+| **NLLB 600M** | 60.1 | 1.00 / 2.59 s | "Hello, as I am, there is no such thing." |
 
-Translation was the weakest stage, so we took the better model. In the whole program (test call, 15 s phrases) the
-latency is p50 3.0 s, max 4.0 s, still under 5 s, and the program needs 3.6 GB instead of 2.8 GB. The margin is
-smaller than with 600M, which stays the fallback: `--nllb-dir models/nllb-200-distilled-600M-ct2-int8`.
+1.3B translates better and was the default first. It failed the stress test: with both sides talking at once for
+2.5 minutes, 4 of 23 lines went over 5 s (max 6.6 s), and in a 10-minute session the Mac kept swapping (peak 2.7 GB).
+With 600M the same tests gave 0 over 5 s (max 3.5 s), peak 2.1 GB and little swap. So 600M is the default and 1.3B
+is an option for calls where only one side talks: `--nllb-dir models/nllb-200-distilled-1.3B-ct2-int8`.
 ASR and translation run on the CPU one after the other in the same worker, so they do not compete.
 LLM-based translators were not considered: too large for 8 GB next to the other models. Licence of NLLB weights: CC-BY-NC 4.0 (fine for this challenge, not for commercial use).
 
@@ -217,7 +218,7 @@ Measured on an M1 MacBook with 8 GB (details and all numbers in `DECISIONS.md`).
 |---|---|---|
 | Is the Armenian recognised? | Yes on clear speech: CER 3.3 % / WER 10 % on single FLEURS sentences, 4.1 % / 10.2 % on a test call with long turns | `eval/run_asr.py`, `eval/score_call.py` |
 | Is the English understandable? | Mostly. Translation errors follow ASR errors: `Քաղաքակրթություն` (civilization) heard as `Քաղաքականություն` (politics) gave "The word politics comes from the Latin syphilis" | `eval/results/live-runs/2026-10-23-test-call-live-blackhole.md` |
-| Under 5 seconds? | Yes: with the final settings (15 s limit, NLLB 1.3B) p50 3.0 s, max 4.0 s on the test call; with NLLB 600M max 2.8 s; 0.8–1.5 s on the microphone (600M) | `--stats` |
+| Under 5 seconds? | Yes with the final settings (15 s limit, NLLB 600M): 10-minute test call p50 2.2 s, max 3.5 s; both sides talking at once max 3.5 s; 0.8–1.5 s on the microphone | `--stats` |
 | Are speakers kept apart? | 3 of 3 voices, 9/9 turns, also through the Opus codec calls use | `eval/score_call.py` |
 | Local only? | Yes, runs with all network blocked | DECISIONS.md |
 
@@ -227,15 +228,17 @@ What does not work well, or is not proven yet:
 - **Very long turns are cut**, sometimes inside a word: each part is transcribed and translated on its own. With
   the first limit of 8 s, `քարանձավ` (cave) was split into "…մի։" and "Անցավ…", and the cave was missing from the
   English. Raising the limit to 15 s cut the test call 3 times instead of 11 and lowered CER from 5.7 % to 4.1 %,
-  with latency still max 2.8 s. Turns over 15 s are still cut.
+  with latency still max 2.8 s. Turns over 15 s are still cut, but now at the quietest moment of the last second
+  (usually a gap between words): at an 8 s limit this lowered CER from 5.7 % to 5.1 %.
 - **Two very similar voices** were never tested: the Armenian test data has only one man and two women.
 - **Colloquial Armenian is hard to translate.** Live on the mic, ASR got spontaneous speech right (`էս`, `ա`), but
   NLLB 600M turned `ինչ կա, չկա` ("what's up") into "there is no such thing" and `չատերը` ("the chatbots") into
   "chessboard". NLLB 1.3B gets these mostly right ("Hi, how are you?", "chat"), but it was trained mostly on
   formal text, so slang will still go wrong.
-- **Latency margin is about 1 s** with NLLB 1.3B (max 4.0 s). A call app running at the same time takes CPU; if
-  phrases go over 5 s, switch to the 600M translator (`--nllb-dir`).
-- **The Mac must be quiet**: with another heavy job running on battery, single phrases took up to 10 s.
+- **Latency margin is about 1.5 s** with NLLB 600M (max 3.5 s), also when both sides talk at once. NLLB 1.3B
+  translates colloquial phrases better but went over 5 s when both sides talked.
+- **The Mac must be quiet**: with another heavy job running on battery, single phrases took up to 10 s; with a
+  local LLM (Ollama, 4+ GB) running at the same time the Mac swapped and one translation took 210 s.
 
 ## 7. Known limitations
 - **Accuracy depends on the ASR model's training data** (296 h of Eastern Armenian, much of it read speech:

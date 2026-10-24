@@ -20,6 +20,9 @@ Automated tests: `pytest` (pure logic only, no models or audio devices needed).
   Synthetic (`eval/make_noise.py`: room tone, fan, typing, thumps, breaths, 60 s each): 0 lines in 5 min, the
   VAD never fired (2026-10-24). Still to do: 5 min real idle room through the mic (`python -m livetr --no-system`).
 - [ ] Numbers, names (Երևան, Գյումրի) and questions (՞) come out readable.
+  FLEURS (`eval/run_numbers.py`, 30 sentences with digits): ASR always writes numbers as words (readable, mostly
+  right); English has the exact number in 12/30, years go wrong most (1889 -> 1899, 1940 -> "a hundred and forty").
+  Only 2 FLEURS questions <= 15 s: ՞ lost in both. Names and questions: own recordings needed (s01 s05 s08 s09 s12 s15).
 - [x] CER/WER metric is correct on known examples. (automated: `test_metrics.py`)
 
 ## R3 — English translation
@@ -31,12 +34,14 @@ Automated tests: `pytest` (pure logic only, no models or audio devices needed).
 - [x] Mic segments always labelled `Me`. (automated; live: 6/6 phrases `Me`, 0.8–1.5 s, 2026-10-23)
 - [x] Two different call-side voices get different labels. (automated with synthetic embeddings; test call: 3 of 3
   voices kept apart, 9/9 turns, also live through BlackHole and through Opus 16 kbps)
-- [ ] Same voice keeps its label for the whole session (10+ minutes). (automated: stable centroid test; live only 2.5 min so far)
+- [x] Same voice keeps its label for the whole session (10+ minutes). (automated; `test_call_long`: 10.5 min,
+  36 turns, 36/36 right, 2026-10-24; live only 2.5 min so far)
 - [x] Short segments do not create new speakers. (automated)
 - [ ] `eval/run_speakers.py` similarity distributions: same-speaker vs different-speaker separate cleanly?
   FLEURS pairs (`eval/fleurs_speakers.py`): yes, valley at 0.4–0.5 for full clips and 3 s crops; threshold 0.45.
 - [ ] Two call participants of the same gender / similar voice: are they kept apart? (known hard case)
-- [ ] Video/call with 10+ speaker switches: every returning speaker gets its old label back.
+- [x] Video/call with 10+ speaker switches: every returning speaker gets its old label back.
+  `test_call_long` (FLEURS, 3 voices, 35 switches): 36/36 turns, 3 speakers found, 0 `Speaker ?` (2026-10-24).
   Test call: 8 switches, all returning speakers got their old label back.
   Live test 1: 2 switches, correct, too few to count.
 
@@ -54,13 +59,19 @@ Automated tests: `pytest` (pure logic only, no models or audio devices needed).
 - [ ] Both sides talking at once: queue wait visible, latency still acceptable?
   Test: `python -m livetr --file eval/data/test_call.wav --mic-file eval/data/overlap_mic.wav` (mic = Opus copy
   of the call, 3 s later, so both sides overlap almost all the time).
-- [ ] First segment after start is not slow (warm-up done at startup).
+  NLLB 1.3B: 4 of 23 over 5 s (max 6.6 s, queue wait up to 5.4 s). NLLB 600M: 0 over 5 s, max 3.5 s, wait max 1.9 s.
+  -> default switched to 600M (2026-10-24). Wait is shown on every line (`wait`).
+- [x] First segment after start is not slow (warm-up done at startup): first phrase 2.6 s; ready 15 s after the
+  command on a quiet Mac (82-166 s while Ollama was swapping the Mac) (2026-10-24).
 - [ ] Memory: Activity Monitor shows no swap during a 10-minute call.
+  10.5 min replay, no call app: NLLB 1.3B peak 2.7 GB, swap grew ~1.3 GB over the tests; NLLB 600M peak 2.1 GB,
+  swap grew ~0.2 GB (macOS also swaps out idle apps, so 'zero swap' is not reachable with VS Code + browser open).
+  Still to check: real Zoom/Meet call open at the same time.
 
 ## C2 — Local only
 - [x] No network needed: runs inside a sandbox that blocks all outgoing connections (2026-10-23).
 
 ## Interview rehearsal
 - [ ] Real call (Zoom/Meet) with 2 people on the call side, 5 minutes, Armenian.
-- [ ] Start-up time from command to "listening" noted.
+- [x] Start-up time from command to "listening" noted: 15 s (2026-10-24).
 - [ ] Chat transcripts exported to `chats/`, one .md per session.
