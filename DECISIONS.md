@@ -286,3 +286,17 @@ Parliament hearing, fast spontaneous speech, current ASR (FastConformer), 38 lin
   people to speak in turn, and the official answering). Likely two similar male voices merged at threshold 0.45.
   Not provable without the audio (not saved). FLEURS two women (max similarity 0.29) are kept apart (36/36).
   Similar voices stay a known weak point; a live check with two same-gender people is still needed.
+
+## 2026-10-25 — Similar voices: two men on a podcast, threshold 0.45 confirmed
+YouTube podcast "Rearrange #310" (host Narek Amirkhanyan, guest Hayk Margaryan, both men), video 05:00-15:00,
+replayed with `--file` (audio downloaded with yt-dlp in a separate scratch environment, not committed). No written
+ground truth: roles are read from the text (questions with ՞ from the host, long answers from the guest).
+| threshold | lines | guest | host questions (3) | false new speakers | latency max |
+|---|---|---|---|---|---|
+| **0.45** | 71 | `Speaker 1` throughout | 3/3 `Speaker 2` | 1 (one-word interjection) | 3.7 s |
+| 0.55 | 71 | `Speaker 1` | 3/3 `Speaker 2` | 3 | 4.5 s |
+| 0.65 | 71 | `Speaker 1` | 3/3 `Speaker 4` | 7, plus 3 `Speaker ?` | 3.6 s |
+A stricter threshold does not separate the host better (he is already apart at 0.45); it only splits the guest's
+short lines into new speakers. 0.45 stays. A sponsor ad (07:11-07:39) gets the host's label at every threshold,
+most likely because the host reads it himself. Together with the parliament debate (two men probably merged),
+same-gender voices are kept apart when they differ enough, not always.

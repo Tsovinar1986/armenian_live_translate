@@ -17,9 +17,34 @@ EN: I'm fine, thank you.
 The grey part of each header is the measured latency from the end of the phrase to the printed line,
 followed by the time per stage (queue wait, ASR, speaker embedding, translation). It turns red above 5 s.
 
-> **Status:** code and unit tests are complete. The ASR model and the speaker threshold were chosen by measurement
-> on the target Mac (M1, 8 GB; see [Models and why](#4-models-and-why) and `DECISIONS.md`). Tested live: the
-> microphone side and a 3-voice test call through BlackHole. Not yet tested: a real call app with real people.
+## Status (25 Oct 2026)
+
+Code and unit tests (39) are complete. Models and settings were chosen by measurement on the target Mac
+(M1, 8 GB). Each check below is listed in `TESTS.md` with its numbers, and each decision in `DECISIONS.md`.
+
+**Tested and working**
+| Check | Result |
+|---|---|
+| Latency, 10-minute test call (35 speaker switches) | p50 2.2 s, max 3.5 s, 0 over 5 s |
+| Both sides talking at once (2.5 min overlap) | 0 of 23 lines over 5 s, max 3.5 s |
+| Speaker labels over 10 minutes | 36/36 turns right, 3 of 3 voices |
+| Two men on a real podcast (YouTube, 10 min) | host and guest kept apart: 3/3 host questions `Speaker 2`, guest `Speaker 1` throughout |
+| Start-up | 12–15 s from command to listening; first phrase 2.6 s |
+| Silence and noise | synthetic noise 5 min: 0 lines; real idle room 13.5 min: 1 line, now filtered |
+| Memory | peak 2.1 GB |
+| Local only | runs with all network blocked |
+
+**Known weak points (measured, not hidden)**
+- Spontaneous speech: Armenian is mostly right, loanwords are often misheard, and the English gives the gist in
+  about half the lines of a fast debate.
+- Numbers come out as Armenian words; the English has the exact number in 12 of 30 FLEURS sentences, and years
+  are the weakest.
+- Similar voices: kept apart on the podcast, but in a parliament debate two men were probably merged. A short
+  interjection can get a new label (`Speaker 3` once in 10 minutes).
+- Colloquial phrases translate worse with the 600M model chosen for speed (`ինչ կա, չկա` -> "there is no such
+  thing"). The 1.3B model is better but went over 5 s when both sides talked.
+
+**Not yet tested:** a real Zoom/Meet call with two people on the call side (planned before the interview).
 
 ---
 
@@ -218,18 +243,23 @@ Measured on an M1 MacBook with 8 GB (details and all numbers in `DECISIONS.md`).
 | Is the Armenian recognised? | Yes on clear speech: CER 3.3 % / WER 10 % on single FLEURS sentences, 4.1 % / 10.2 % on a test call with long turns | `eval/run_asr.py`, `eval/score_call.py` |
 | Is the English understandable? | Mostly. Translation errors follow ASR errors: `Քաղաքակրթություն` (civilization) heard as `Քաղաքականություն` (politics) gave "The word politics comes from the Latin syphilis" | `eval/results/live-runs/2026-10-23-test-call-live-blackhole.md` |
 | Under 5 seconds? | Yes with the final settings (15 s limit, NLLB 600M): 10-minute test call p50 2.2 s, max 3.5 s; both sides talking at once max 3.5 s; 0.8–1.5 s on the microphone | `--stats` |
-| Are speakers kept apart? | 3 of 3 voices, 9/9 turns, also through the Opus codec calls use | `eval/score_call.py` |
+| Are speakers kept apart? | Test call: 3 of 3 voices, 9/9 turns, also through the Opus codec calls use; 10-minute call 36/36. Two-man podcast: host and guest kept apart | `eval/score_call.py`, TESTS.md |
 | Local only? | Yes, runs with all network blocked | DECISIONS.md |
 
 What does not work well, or is not proven yet:
-- **Spontaneous, fast speech** is much harder than read speech. A YouTube conversation (with an older model)
-  gave many wrong words; the current model has not yet been tested on such speech.
+- **Spontaneous, fast speech** is much harder than read speech. In a YouTube parliament debate (current model)
+  colloquial forms (`էս`, `ա`, `սենց`) were right, loanwords misheard (front office -> `ֆրոնտոֆիս`), and the
+  English gave the gist in about half the lines. NLLB sometimes looped ("no, no, no, …" for 130 words); blocking
+  repeated 4-grams fixed that without changing FLEURS quality (chrF 60.1 -> 60.2).
 - **Very long turns are cut**, sometimes inside a word: each part is transcribed and translated on its own. With
   the first limit of 8 s, `քարանձավ` (cave) was split into "…մի։" and "Անցավ…", and the cave was missing from the
   English. Raising the limit to 15 s cut the test call 3 times instead of 11 and lowered CER from 5.7 % to 4.1 %,
   with latency still max 2.8 s. Turns over 15 s are still cut, but now at the quietest moment of the last second
   (usually a gap between words): at an 8 s limit this lowered CER from 5.7 % to 5.1 %.
-- **Two very similar voices** were never tested: the Armenian test data has only one man and two women.
+- **Two similar voices**: on a 10-minute two-man podcast the host and guest were kept apart (host questions 3/3
+  `Speaker 2`, guest `Speaker 1` throughout; one short interjection got `Speaker 3`). In a parliament debate two
+  men were probably merged (37 of 38 lines `Speaker 1`). So same-gender voices work when they differ enough,
+  not always.
 - **Colloquial Armenian is hard to translate.** Live on the mic, ASR got spontaneous speech right (`էս`, `ա`), but
   NLLB 600M turned `ինչ կա, չկա` ("what's up") into "there is no such thing" and `չատերը` ("the chatbots") into
   "chessboard". NLLB 1.3B gets these mostly right ("Hi, how are you?", "chat"), but it was trained mostly on
@@ -252,9 +282,9 @@ What does not work well, or is not proven yet:
 - **One worker.** When both sides talk at the same time, one waits. That wait counts towards the 5 s.
 - **Phrase-level output.** Nothing is printed until the speaker pauses (or 15 s pass). Long sentences that are
   force-cut are translated in pieces, so the translation can be worse at the cut.
-- **ASR can still produce words from noise** that the VAD lets through (music, typing). There is no text filter,
-  on purpose: such errors stay visible.
-- **8 GB RAM and a busy CPU.** The program needs ~2.8 GB. With a call app, a browser and other jobs, the Mac swaps
+- **ASR can still produce words from noise** that the VAD lets through. Only results with fewer than 2 letters are
+  dropped (an idle mic once gave `Ժ։` -> "What are you doing?"); anything longer stays visible on purpose.
+- **8 GB RAM and a busy CPU.** The program needs ~2.1 GB. With a call app, a browser and other jobs, the Mac swaps
   or the CPU is shared, and latency spikes (we saw single phrases at 10 s while another job ran in the background,
   on battery). Run on power with other heavy apps closed; check Activity Monitor → Memory → Swap Used.
 - No echo handling: use headphones.
@@ -263,7 +293,6 @@ What does not work well, or is not proven yet:
 - Try the CTC decoder of the same model and an Armenian language model for decoding (card: RNNT is more
   accurate; an external LM may fix spelling of names).
 - Fine-tune on conversational Armenian audio recorded through a real call codec.
-- Cut long turns at the quietest moment near the limit instead of exactly at it.
 - Stream partial results (show Armenian text while the person is still speaking, finalise at the pause).
 - Process both sources in parallel if memory allows, or prioritise the source that has waited longer.
 - Better diarization on the call side: overlap-aware segmentation (pyannote/diart) inside long segments, and
