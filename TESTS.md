@@ -95,15 +95,9 @@ Automated tests: `pytest` (pure logic only, no models or audio devices needed).
 ## Interview rehearsal
 - [ ] Real call (Zoom/Meet) with 2 people on the call side, 5 minutes, Armenian.
   Solo rehearsal instead (2026-10-25): author on the mic (wired headset) + YouTube interview Rearrange #310 (two men)
-  through Multi-Output -> BlackHole, 4.5 min after fixing the routing, 81 lines. Latency mic p50 1.1 / max 2.3 s,
-  call side p50 2.1 / max 3.3 s, 0 over 5 s. Guest `Speaker 1` (21 lines), host + his ad `Speaker 2` (8), guest
-  label kept after the ad. Problems: (1) plugging in the headset switched the output away from the Multi-Output
-  Device, first 3 min had no call side; (2) the headset mic heard the headphones: ~12 of 52 `Me` lines repeat the
-  video's words. Fix: lower volume / closed headphones, check with `--meter` (mic bar silent while only the call
-  plays). Ctrl-C also stopped `tee` before the stats: use `tee -i`.
-  Second run after lowering the headphone volume (1.5 min, 23 lines): 0 video phrases repeated under `Me` (all 12 `Me`
-  lines are the author's own words), latency max 2.6 s (mic) / 3.9 s (call side), 0 over 5 s, stats saved with
-  `tee -i`. ASR repeated «միշտ» 12 times once; the English stayed clean (4-gram block).
+  through Multi-Output -> BlackHole, 1.5 min, 23 lines (12 `Me`, 11 call side). Latency mic p50 1.5 / max 2.6 s,
+  call side p50 1.9 / max 3.9 s, 0 over 5 s. All `Me` lines are the author's own words (no call audio leaking into
+  the mic). ASR repeated «միշտ» 12 times once; the English stayed clean (4-gram block).
 - [x] Start-up time from command to "listening" noted: 15 s (2026-10-24).
 - [x] Fresh clone from GitHub, README steps 1.1-1.2 exactly as written (new venv, pip install, model download):
   39 tests pass, test call p50 2.2 s / max 2.9 s; first start 30 s with cold caches (2026-10-25).

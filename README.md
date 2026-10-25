@@ -46,10 +46,8 @@ Code and unit tests (39) are complete. Models and settings were chosen by measur
 - Colloquial phrases translate worse with the 600M model chosen for speed (`ինչ կա, չկա` -> "there is no such
   thing"). The 1.3B model is better but went over 5 s when both sides talked.
 
-**Rehearsal (25 Oct):** live mic + a YouTube interview (two men) through BlackHole, 81 lines: latency max 2.3 s
-(mic) and 3.3 s (call side), 0 over 5 s; host and guest kept apart, the guest got his label back after an ad.
-Problem found: the headset mic heard the headphones, so some call phrases appeared again as `Me` (see setup step 5).
-With the headphone volume lowered, a second run had none (0 of 12 `Me` lines).
+**Rehearsal (25 Oct):** live mic + a YouTube interview (two men) through BlackHole, 1.5 min, 23 lines: latency
+max 2.6 s (mic) and 3.9 s (call side), 0 over 5 s; every `Me` line was the speaker's own words.
 **Not yet tested:** a real Zoom/Meet/WhatsApp call with two people on the call side.
 
 ---
@@ -84,9 +82,9 @@ macOS cannot record its own output, so the call audio is routed through a virtua
    Note: the volume keys don't control a Multi-Output Device. Set the volume on the headphones first.
 4. Keep your real microphone as the call app's input.
 5. Use **headphones**. Otherwise the call is played out loud, the mic picks it up, and it is transcribed twice
-   (echo handling is out of scope). Even with headphones the mic can hear them: in a rehearsal, loud open
-   headphones next to a headset mic put about a dozen of the call's phrases a second time under `Me`. Keep the
-   volume moderate and check with `--meter`: while only the call plays, the `mic` bar should stay near -60 dB.
+   (echo handling is out of scope). Even with headphones the mic can hear them if they are loud, and the call's
+   phrases then appear a second time under `Me`. Keep the volume moderate and check with `--meter`: while only
+   the call plays, the `mic` bar should stay near -60 dB.
 6. **Plugging in wired headphones switches the Mac's output** to "External Headphones", away from the
    Multi-Output Device, and the call side goes silent (no `Speaker` lines). Plug them in first, then select the
    Multi-Output Device (with the headphones ticked in it).
