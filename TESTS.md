@@ -21,7 +21,7 @@ Automated tests: `pytest` (pure logic only, no models or audio devices needed).
   VAD never fired (2026-10-24).
   Real idle room, MINISO mic, 13.5 min: 1 line, ASR «Ժ։» -> EN "What are you doing?". Fixed: results with fewer than
   2 letters are dropped like empty ones (automated: `test_pipeline.py`) -> 0 lines expected.
-- [ ] Numbers, names (Երևան, Գյումրի) and questions (՞) come out readable.
+- [x] Numbers, names (Երևան, Գյումրի) and questions (՞) come out readable (except years).
   FLEURS (`eval/run_numbers.py`, 30 sentences with digits): ASR always writes numbers as words (readable, mostly
   right); English has the exact number in 12/30, years go wrong most (1889 -> 1899, 1940 -> "a hundred and forty").
   Only 2 FLEURS questions <= 15 s: ՞ lost in both. Names and questions: own recordings needed (s01 s05 s08 s09 s12 s15).
@@ -30,7 +30,10 @@ Automated tests: `pytest` (pure logic only, no models or audio devices needed).
   questions: ՞ kept 2 of 4, but the English is a correct question in 4/4;
   numbers: 25, 5000, March 15 at 3:00, 120 km right; both years wrong (1995: ASR «ին» for «ինը»;
   2026: ASR right, NLLB "the year 2600"). The take cut the last word in 6 clips (Enter pressed while speaking)
-  and shifted s01/s05/s08; record.py now keeps 0.7 s after Enter. Re-take of s01 s05 s08 s24 still to do.
+  and shifted s01/s05/s08; record.py now keeps 0.7 s after Enter.
+  After re-taking s01 s05 s08 s24: CER 5.2 % / WER 12.4 % on all 16 (first take 27.9 % / 39.3 %); the 4 re-takes
+  are exact. ՞ kept 4 of 7 questions, English a correct question 7/7. Still wrong: both years; s23, s26, s31 lost
+  their last word in the first take (not re-recorded). 3 re-takes start with a dash «֊» (not seen in 300+ live lines).
 - [x] CER/WER metric is correct on known examples. (automated: `test_metrics.py`)
 - [x] Spontaneous fast speech with the current model: YouTube debate, 38 lines. Colloquial forms right, loanwords
   misheard, English gist in about half the lines. NLLB loops fixed with `no_repeat_ngram_size=4` (2026-10-24).

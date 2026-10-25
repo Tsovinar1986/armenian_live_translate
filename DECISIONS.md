@@ -307,6 +307,7 @@ clip, in Armenian and English. Questions became English questions in 4/4 even wh
 the four non-year ones were right; both years were wrong, once from ASR (1995) and once from NLLB (2026 -> 2600).
 Not fixed: converting Armenian number words to digits before translation would address the NLLB part, but it is a
 new feature with a parser to test, not in the time budget. Kept as a known limitation.
+After the fix and a re-take of 4 clips: CER 5.2 % / WER 12.4 % over the 16 sentences (`eval/results/asr_results.csv`).
 Recorder fix: the first take cut the last word in 6 of 16 clips, because Enter was pressed while the last word was
 still being said; `eval/record.py` now records 0.7 s more after Enter, and a re-recorded clip replaces its old
 manifest row instead of adding a duplicate.
