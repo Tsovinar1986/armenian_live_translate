@@ -202,8 +202,9 @@ Model and threshold choices come from numbers, not impressions. All of this runs
 local (`eval/data/` is git-ignored).
 
 ```bash
-# 1. record the eval set: 24 sentences from eval/sentences.tsv (+ free speech for speaker tests)
+# 1. record the eval set: 32 sentences from eval/sentences.tsv (+ free speech for speaker tests)
 python eval/record.py --speaker anna
+python eval/record.py --speaker anna --ids s09 s15 s29     # only some sentences (names, questions, numbers)
 python eval/record.py --speaker davit
 python eval/record.py --speaker davit --free 6
 
@@ -229,7 +230,13 @@ python eval/make_test_call.py
 python -m livetr --file eval/data/test_call_opus16k.wav --no-mic --no-color | tee eval/data/test_call_out.txt
 python eval/score_call.py eval/data/test_call_out.txt
 
-# 5. end-to-end latency on a recording, without a call
+# 6. stress tests before a call
+python eval/make_test_call.py --turns 12 --name test_call_long   # 10-minute call, 36 turns: labels + memory
+python -m livetr --file eval/data/test_call.wav --mic-file eval/data/overlap_mic.wav   # both sides at once
+python eval/make_noise.py && python -m livetr --file eval/data/noise.wav               # invented lines in noise
+python eval/run_numbers.py                                       # numbers and ՞ on FLEURS
+
+# 7. end-to-end latency on a recording, without a call
 python -m livetr --file some_call.wav
 ```
 
