@@ -46,7 +46,10 @@ Code and unit tests (39) are complete. Models and settings were chosen by measur
 - Colloquial phrases translate worse with the 600M model chosen for speed (`ինչ կա, չկա` -> "there is no such
   thing"). The 1.3B model is better but went over 5 s when both sides talked.
 
-**Not yet tested:** a real Zoom/Meet call with two people on the call side (planned before the interview).
+**Rehearsal (25 Oct):** live mic + a YouTube interview (two men) through BlackHole, 81 lines: latency max 2.3 s
+(mic) and 3.3 s (call side), 0 over 5 s; host and guest kept apart, the guest got his label back after an ad.
+Problem found: the headset mic heard the headphones, so some call phrases appeared again as `Me` (see setup step 5).
+**Not yet tested:** a real Zoom/Meet/WhatsApp call with two people on the call side.
 
 ---
 
@@ -80,7 +83,12 @@ macOS cannot record its own output, so the call audio is routed through a virtua
    Note: the volume keys don't control a Multi-Output Device. Set the volume on the headphones first.
 4. Keep your real microphone as the call app's input.
 5. Use **headphones**. Otherwise the call is played out loud, the mic picks it up, and it is transcribed twice
-   (echo handling is out of scope).
+   (echo handling is out of scope). Even with headphones the mic can hear them: in a rehearsal, loud open
+   headphones next to a headset mic put about a dozen of the call's phrases a second time under `Me`. Keep the
+   volume moderate and check with `--meter`: while only the call plays, the `mic` bar should stay near -60 dB.
+6. **Plugging in wired headphones switches the Mac's output** to "External Headphones", away from the
+   Multi-Output Device, and the call side goes silent (no `Speaker` lines). Plug them in first, then select the
+   Multi-Output Device (with the headphones ticked in it).
 
 Check the routing before starting:
 ```bash
@@ -96,6 +104,8 @@ python -m livetr --file call.wav                   # replay a recording in real 
 python -m livetr --no-mic                          # only the call side
 ```
 Ctrl-C stops and prints session statistics (latency p50/p90/max per source, time per stage, dropped segments).
+To keep a copy for review, use `python -m livetr --no-color 2>&1 | tee -i run.txt`: without `-i`, Ctrl-C also stops
+`tee` before the statistics are written.
 
 Useful knobs: `--min-silence-ms` (pause that ends a phrase, default 500), `--max-segment-s` (forced cut,
 default 15), `--speaker-threshold` (default 0.45), `--vad-threshold` (default 0.5). Run `--help` for all of them.
