@@ -95,4 +95,6 @@ Automated tests: `pytest` (pure logic only, no models or audio devices needed).
 ## Interview rehearsal
 - [ ] Real call (Zoom/Meet) with 2 people on the call side, 5 minutes, Armenian.
 - [x] Start-up time from command to "listening" noted: 15 s (2026-10-24).
+- [x] Fresh clone from GitHub, README steps 1.1-1.2 exactly as written (new venv, pip install, model download):
+  39 tests pass, test call p50 2.2 s / max 2.9 s; first start 30 s with cold caches (2026-10-25).
 - [ ] Chat transcripts exported to `chats/`, one .md per session.
