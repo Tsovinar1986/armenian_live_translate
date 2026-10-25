@@ -49,6 +49,7 @@ Code and unit tests (39) are complete. Models and settings were chosen by measur
 **Rehearsal (25 Oct):** live mic + a YouTube interview (two men) through BlackHole, 81 lines: latency max 2.3 s
 (mic) and 3.3 s (call side), 0 over 5 s; host and guest kept apart, the guest got his label back after an ad.
 Problem found: the headset mic heard the headphones, so some call phrases appeared again as `Me` (see setup step 5).
+With the headphone volume lowered, a second run had none (0 of 12 `Me` lines).
 **Not yet tested:** a real Zoom/Meet/WhatsApp call with two people on the call side.
 
 ---

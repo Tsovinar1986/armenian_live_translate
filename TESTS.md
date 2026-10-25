@@ -101,6 +101,9 @@ Automated tests: `pytest` (pure logic only, no models or audio devices needed).
   Device, first 3 min had no call side; (2) the headset mic heard the headphones: ~12 of 52 `Me` lines repeat the
   video's words. Fix: lower volume / closed headphones, check with `--meter` (mic bar silent while only the call
   plays). Ctrl-C also stopped `tee` before the stats: use `tee -i`.
+  Second run after lowering the headphone volume (1.5 min, 23 lines): 0 video phrases repeated under `Me` (all 12 `Me`
+  lines are the author's own words), latency max 2.6 s (mic) / 3.9 s (call side), 0 over 5 s, stats saved with
+  `tee -i`. ASR repeated «միշտ» 12 times once; the English stayed clean (4-gram block).
 - [x] Start-up time from command to "listening" noted: 15 s (2026-10-24).
 - [x] Fresh clone from GitHub, README steps 1.1-1.2 exactly as written (new venv, pip install, model download):
   39 tests pass, test call p50 2.2 s / max 2.9 s; first start 30 s with cold caches (2026-10-25).
