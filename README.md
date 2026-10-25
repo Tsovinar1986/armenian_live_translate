@@ -37,8 +37,10 @@ Code and unit tests (39) are complete. Models and settings were chosen by measur
 **Known weak points (measured, not hidden)**
 - Spontaneous speech: Armenian is mostly right, loanwords are often misheard, and the English gives the gist in
   about half the lines of a fast debate.
-- Numbers come out as Armenian words; the English has the exact number in 12 of 30 FLEURS sentences, and years
-  are the weakest.
+- Numbers come out as Armenian words; the English has the exact number in 12 of 30 FLEURS sentences. Own
+  recordings: ages, prices, dates and distances right, both years wrong (2026 -> "the year 2600").
+- Names Երևան and Գյումրի: right in every own recording, in Armenian and English. Questions: the English is a
+  question even when the ՞ is dropped.
 - Similar voices: kept apart on the podcast, but in a parliament debate two men were probably merged. A short
   interjection can get a new label (`Speaker 3` once in 10 minutes).
 - Colloquial phrases translate worse with the 600M model chosen for speed (`ինչ կա, չկա` -> "there is no such

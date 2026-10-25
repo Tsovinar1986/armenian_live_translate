@@ -300,3 +300,13 @@ A stricter threshold does not separate the host better (he is already apart at 0
 short lines into new speakers. 0.45 stays. A sponsor ad (07:11-07:39) gets the host's label at every threshold,
 most likely because the host reads it himself. Together with the parliament debate (two men probably merged),
 same-gender voices are kept apart when they differ enough, not always.
+
+## 2026-10-25 — Own recordings: names and questions fine, years are the weak spot
+16 sentences read by the author (eval/sentences.tsv s01-s32 subset). Names (Երևան, Գյումրի) were right in every
+clip, in Armenian and English. Questions became English questions in 4/4 even where ՞ was dropped. Of six numbers,
+the four non-year ones were right; both years were wrong, once from ASR (1995) and once from NLLB (2026 -> 2600).
+Not fixed: converting Armenian number words to digits before translation would address the NLLB part, but it is a
+new feature with a parser to test, not in the time budget. Kept as a known limitation.
+Recorder fix: the first take cut the last word in 6 of 16 clips, because Enter was pressed while the last word was
+still being said; `eval/record.py` now records 0.7 s more after Enter, and a re-recorded clip replaces its old
+manifest row instead of adding a duplicate.

@@ -25,6 +25,12 @@ Automated tests: `pytest` (pure logic only, no models or audio devices needed).
   FLEURS (`eval/run_numbers.py`, 30 sentences with digits): ASR always writes numbers as words (readable, mostly
   right); English has the exact number in 12/30, years go wrong most (1889 -> 1899, 1940 -> "a hundred and forty").
   Only 2 FLEURS questions <= 15 s: ՞ lost in both. Names and questions: own recordings needed (s01 s05 s08 s09 s12 s15).
+  Own recordings, first take (author, MINISO mic, 16 sentences, 2026-10-25):
+  names: Երևան and Գյումրի right in every clip, in HY and EN (6/6 sentences);
+  questions: ՞ kept 2 of 4, but the English is a correct question in 4/4;
+  numbers: 25, 5000, March 15 at 3:00, 120 km right; both years wrong (1995: ASR «ին» for «ինը»;
+  2026: ASR right, NLLB "the year 2600"). The take cut the last word in 6 clips (Enter pressed while speaking)
+  and shifted s01/s05/s08; record.py now keeps 0.7 s after Enter. Re-take of s01 s05 s08 s24 still to do.
 - [x] CER/WER metric is correct on known examples. (automated: `test_metrics.py`)
 - [x] Spontaneous fast speech with the current model: YouTube debate, 38 lines. Colloquial forms right, loanwords
   misheard, English gist in about half the lines. NLLB loops fixed with `no_repeat_ngram_size=4` (2026-10-24).

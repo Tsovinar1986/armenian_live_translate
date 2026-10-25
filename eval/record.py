@@ -15,6 +15,7 @@ import csv
 import queue
 import sys
 import threading
+import time
 import wave
 from pathlib import Path
 
@@ -27,6 +28,7 @@ from livetr.audio import devices as dev  # noqa: E402
 from livetr.audio.capture import Converter, DeviceSource  # noqa: E402
 
 DATA = ROOT / "eval" / "data"
+TAIL_S = 0.7  # seconds still recorded after Enter (first take cut the last word in 6 of 16 clips)
 
 
 def record_one(src: DeviceSource) -> np.ndarray:
@@ -43,7 +45,10 @@ def record_one(src: DeviceSource) -> np.ndarray:
 
     t = threading.Thread(target=wait_enter, daemon=True)
     t.start()
-    while not stop.is_set() or not src.blocks.empty():
+    stop_at = None  # keep recording TAIL_S after Enter: people press it while saying the last word
+    while stop_at is None or time.monotonic() < stop_at or not src.blocks.empty():
+        if stop_at is None and stop.is_set():
+            stop_at = time.monotonic() + TAIL_S
         try:
             chunks.append(conv(src.blocks.get(timeout=0.1).audio))
         except queue.Empty:
@@ -87,26 +92,32 @@ def main() -> None:
             items = [it for it in items if it[0] in args.ids]
 
     manifest = DATA / "manifest.tsv"
-    new_file = not manifest.exists()
     DATA.mkdir(parents=True, exist_ok=True)
-    with open(manifest, "a", encoding="utf-8", newline="") as mf:
-        w = csv.writer(mf, delimiter="\t")
-        if new_file:
+    rows: dict[str, list[str]] = {}  # path -> row; a re-recorded clip replaces its old row
+    if manifest.exists():
+        with open(manifest, encoding="utf-8") as f:
+            rows = {r["path"]: [r["path"], r["speaker"], r["reference"]] for r in csv.DictReader(f, delimiter="\t")}
+
+    def write_manifest() -> None:
+        with open(manifest, "w", encoding="utf-8", newline="") as mf:
+            w = csv.writer(mf, delimiter="\t")
             w.writerow(["path", "speaker", "reference"])
-        try:
-            for clip_id, ref, prompt in items:
-                print(f"\n[{clip_id}] {prompt}")
-                audio = record_one(src)
-                if len(audio) < 8000:
-                    print("  too short, skipped")
-                    continue
-                rel = Path(args.speaker) / f"{clip_id}.wav"
-                save_wav(DATA / rel, audio)
-                w.writerow([str(rel), args.speaker, ref])
-                mf.flush()
-                print(f"  saved {rel} ({len(audio) / 16000:.1f}s)")
-        finally:
-            src.stop()
+            w.writerows(rows.values())
+
+    try:
+        for clip_id, ref, prompt in items:
+            print(f"\n[{clip_id}] {prompt}")
+            audio = record_one(src)
+            if len(audio) < 8000:
+                print("  too short, skipped")
+                continue
+            rel = Path(args.speaker) / f"{clip_id}.wav"
+            save_wav(DATA / rel, audio)
+            rows[str(rel)] = [str(rel), args.speaker, ref]
+            write_manifest()
+            print(f"  saved {rel} ({len(audio) / 16000:.1f}s)")
+    finally:
+        src.stop()
 
 
 if __name__ == "__main__":
