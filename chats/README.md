@@ -10,14 +10,15 @@ AI tools used: **Claude only**, on claude.ai (web) and in Claude Code (VS Code).
 | 3 | `claude-ai-2026-10-22-project-chat.md` | 22 Oct | Claude Code on claude.ai (coordinator) | The conversation that started sessions 4 and 5: GitHub sync, Multi-Output Device |
 | 4 | `claude-code-2026-10-22-1840-a7d1c4cd.md` | 22 Oct | Claude Code, started from 3 | Sync with GitHub, extend .gitignore |
 | 5 | `claude-code-2026-10-22-2115-44398c8d.md` | 22 Oct | Claude Code, started from 3 | Multi-Output Device setup in Audio MIDI Setup |
+| 6 | `claude-code-2026-10-24-1810-ef07a563.md` | 24–25 Oct | Claude Code | Pre-interview checks from the kanban "In progress" list: forced cut at the quietest moment, stress tests (both sides at once, 10-minute call, noise), translation back to NLLB 600M, repeat blocking, noise filters, own recordings (names, numbers, questions), two-man podcast speaker test, fresh-clone install test, rehearsal and Google Meet check |
 
 How each file was made, and what it does or does not contain:
 - **claude.ai sessions (1, 3):** the conversation copied from the page and pasted unchanged. The page collapses
   Claude's tool steps into one line ("Created 23 files, updated tasks, ran 10 commands", "Used 2 tools"); the
   shared link shows the original, and for 3 the helper sessions 4 and 5 show what the tools did. File 1 holds two copies (chat page and shared page) because each view leaves out something.
-- **Claude Code sessions (2, 4, 5):** converted from the local session logs by `scripts/export_chats.py`, with
+- **Claude Code sessions (2, 4, 5, 6):** converted from the local session logs by `scripts/export_chats.py`, with
   all messages, Claude's reasoning, every tool call and every tool result. Only the logger's internal records
-  (request metadata, cost counters, file snapshots) are left out. Session 2 is re-exported as the last step
-  before submission, so it is complete.
+  (request metadata, cost counters, file snapshots) are left out. Sessions 2 and 6 were re-exported as the last
+  step before submission, so they are complete.
 
 The originals stay available in claude.ai and in Claude Code for the interview.
