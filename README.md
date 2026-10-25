@@ -232,7 +232,7 @@ python eval/score_call.py eval/data/test_call_out.txt
 
 # 6. stress tests before a call
 python eval/make_test_call.py --turns 12 --name test_call_long   # 10-minute call, 36 turns: labels + memory
-python -m livetr --file eval/data/test_call.wav --mic-file eval/data/overlap_mic.wav   # both sides at once
+python -m livetr --file eval/data/test_call.wav --mic-file eval/data/test_call_overlap_mic.wav  # both sides at once
 python eval/make_noise.py && python -m livetr --file eval/data/noise.wav               # invented lines in noise
 python eval/run_numbers.py                                       # numbers and ՞ on FLEURS
 

@@ -14,7 +14,8 @@ Three speakers, three turns each, in an order where every speaker comes back aft
 Limit: no two *very* similar voices, because FLEURS does not have them.
 
 Writes eval/data/test_call.wav, test_call_opus16k.wav (through the 16 kbps Opus codec that calls use, needs
-ffmpeg) and test_call.tsv (start, end, speaker, reference text).
+ffmpeg), test_call.tsv (start, end, speaker, reference text) and test_call_overlap_mic.wav (the Opus copy 3 s
+later, played as the mic with --mic-file so both sides talk at once).
 
 Long session (10+ minutes, many speaker switches): `--turns 12 --name test_call_long` gives each speaker 12 turns
 in a random order (fixed seed) with no speaker twice in a row.
@@ -154,6 +155,8 @@ def main() -> None:
     opus = DATA / f"{args.name}_opus16k.wav"
     subprocess.run(f"ffmpeg -y -loglevel error -i {out} -c:a libopus -b:a 16k -f ogg - | "
                    f"ffmpeg -y -loglevel error -i - -ar 16000 -ac 1 -c:a pcm_s16le {opus}", shell=True, check=True)
+    opus_audio, _ = sf.read(str(opus), dtype="float32")
+    save(DATA / f"{args.name}_overlap_mic.wav", np.concatenate([np.zeros(3 * 16000, np.float32), opus_audio]))
     print(f"{len(call) / 16000:.0f} s, {len(rows)} turns, lowest similarity within a reader "
           + ", ".join(f"{k} {v:.2f}" for k, v in same.items()))
     print(f"largest similarity between two different chosen readers: {cross:.2f}")

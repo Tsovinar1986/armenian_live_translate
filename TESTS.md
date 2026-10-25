@@ -75,7 +75,7 @@ Automated tests: `pytest` (pure logic only, no models or audio devices needed).
 - [x] Forced cut goes into a gap between words when there is one in the last 1 s (automated: `test_segmenter.py`;
   test call at 8 s limit: CER 5.7 % -> 5.1 %).
 - [ ] Both sides talking at once: queue wait visible, latency still acceptable?
-  Test: `python -m livetr --file eval/data/test_call.wav --mic-file eval/data/overlap_mic.wav` (mic = Opus copy
+  Test: `python -m livetr --file eval/data/test_call.wav --mic-file eval/data/test_call_overlap_mic.wav` (mic = Opus copy
   of the call, 3 s later, so both sides overlap almost all the time).
   NLLB 1.3B: 4 of 23 over 5 s (max 6.6 s, queue wait up to 5.4 s). NLLB 600M: 0 over 5 s, max 3.5 s, wait max 1.9 s.
   -> default switched to 600M (2026-10-24). Wait is shown on every line (`wait`).
