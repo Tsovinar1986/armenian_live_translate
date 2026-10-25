@@ -98,6 +98,9 @@ Automated tests: `pytest` (pure logic only, no models or audio devices needed).
   through Multi-Output -> BlackHole, 1.5 min, 23 lines (12 `Me`, 11 call side). Latency mic p50 1.5 / max 2.6 s,
   call side p50 1.9 / max 3.9 s, 0 over 5 s. All `Me` lines are the author's own words (no call audio leaking into
   the mic). ASR repeated «միշտ» 12 times once; the English stayed clean (4-gram block).
+  Google Meet check (2026-10-25): Mac + phone in one meeting, Meet speaker = Multi-Output Device. Call audio reached
+  the program as `Speaker` lines (latency < 1 s), so the Meet route works. A video played on the phone itself does not
+  get into the call (phone echo cancelling): test with a voice or a second device. Noise output «Հովհ.» now dropped.
 - [x] Start-up time from command to "listening" noted: 15 s (2026-10-24).
 - [x] Fresh clone from GitHub, README steps 1.1-1.2 exactly as written (new venv, pip install, model download):
   39 tests pass, test call p50 2.2 s / max 2.9 s; first start 30 s with cold caches (2026-10-25).

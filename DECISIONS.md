@@ -311,3 +311,12 @@ After the fix and a re-take of 4 clips: CER 5.2 % / WER 12.4 % over the 16 sente
 Recorder fix: the first take cut the last word in 6 of 16 clips, because Enter was pressed while the last word was
 still being said; `eval/record.py` now records 0.7 s more after Enter, and a re-recorded clip replaces its old
 manifest row instead of adding a duplicate.
+
+## 2026-10-25 — Drop the ASR noise output «Հովհ.»
+In live runs the ASR wrote «Հովհ.» on noise 10 times (idle mic, a phone's echo-cancelled audio in a Meet call),
+always as the whole output, never inside real speech (0 of 694 saved lines otherwise, 0 in FLEURS). It is the
+abbreviation of Հովհաննես used in Bible references, likely learned from the audiobooks in the training data; NLLB
+turns it into "John: What is it?", and on the call side each one could also create a new speaker. `Processor` now
+treats it like a one-letter result: not translated, not printed, not used for speakers, counted in the stats.
+Words that only start with it («Հովհաննեսը») pass. Other noise outputs stay visible on purpose.
+Same session: Meet -> Multi-Output Device -> BlackHole verified (call side reached the program, latency < 1 s).

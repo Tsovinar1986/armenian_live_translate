@@ -25,10 +25,14 @@ from livetr.types import Result, Segment
 
 
 MIN_LETTERS = 2  # fewer letters is noise, not a phrase: idle mic gave «Ժ։» -> "What are you doing?" (DECISIONS.md)
+# Whole ASR outputs that only ever came from noise in live runs, never from speech (DECISIONS.md, 2026-10-25):
+# «Հովհ.» (Bible-reference abbreviation, from the audiobooks in the ASR training data) -> "John: What is it?"
+NOISE_OUTPUTS = {"Հովհ"}
 
 
 def is_phrase(text: str) -> bool:
-    return len(re.sub(r"[\W_]", "", text)) >= MIN_LETTERS
+    letters = re.sub(r"[\W_]", "", text)
+    return len(letters) >= MIN_LETTERS and letters not in NOISE_OUTPUTS
 
 
 class Asr(Protocol):

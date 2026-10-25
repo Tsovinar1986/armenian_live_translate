@@ -51,12 +51,18 @@ def test_empty_asr_prints_nothing_and_skips_translation():
     assert tr.calls == 0 and buf.getvalue() == "" and stats.empty_asr == 1
 
 
-@pytest.mark.parametrize("text", ["Ժ։", " Է ", "՞ ։"])
+@pytest.mark.parametrize("text", ["Ժ։", " Է ", "՞ ։", "Հովհ.", "Հովհ"])
 def test_single_letter_asr_is_noise(text):
     buf, tr = io.StringIO(), FakeTranslator()
     proc, stats = make_processor(FakeAsr(text=text), tr, buf)
     assert proc.process(Segment("mic", np.zeros(16000, dtype=np.float32), 0.0, 1.0)) is None
     assert tr.calls == 0 and buf.getvalue() == "" and stats.empty_asr == 1
+
+
+def test_noise_word_inside_a_sentence_is_kept():
+    buf, tr = io.StringIO(), FakeTranslator()
+    proc, _ = make_processor(FakeAsr(text="Հովհաննեսը եկավ։"), tr, buf)
+    assert proc.process(Segment("mic", np.zeros(16000, dtype=np.float32), 0.0, 1.0)) is not None
 
 
 def test_two_letter_answer_is_kept():

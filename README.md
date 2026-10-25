@@ -48,6 +48,7 @@ Code and unit tests (39) are complete. Models and settings were chosen by measur
 
 **Rehearsal (25 Oct):** live mic + a YouTube interview (two men) through BlackHole, 1.5 min, 23 lines: latency
 max 2.6 s (mic) and 3.9 s (call side), 0 over 5 s; every `Me` line was the speaker's own words.
+Google Meet route checked: call audio reaches the program through the Multi-Output Device.
 **Not yet tested:** a real Zoom/Meet/WhatsApp call with two people on the call side.
 
 ---
